@@ -1,0 +1,115 @@
+# Load .env file
+# ifneq (,$(wildcard ./.env))
+# 	include .env
+# 	export
+# endif
+
+# Variables
+PROTO_DIR := api/proto
+GO_OUT_DIR := pkg/grpc
+SERVICES := user product order telehealth cms notification
+
+# Check for protoc installation
+PROTOC := $(shell command -v protoc 2> /dev/null)
+
+# Ensure the output directory exists
+$(shell mkdir -p $(GO_OUT_DIR))
+
+# Default target
+all: generate
+
+# Generate Go code from all .proto files
+generate: $(SERVICES)
+
+# Rule to generate Go code for each service
+$(SERVICES):
+	@if [ -d $(PROTO_DIR)/$@ ]; then \
+		echo "Generating Go code for $@ service..."; \
+		OUT_DIR=$(GO_OUT_DIR)/$@; \
+		mkdir -p $$OUT_DIR; \
+		PROTO_FILES=$$(find $(PROTO_DIR)/$@ -name '*.proto'); \
+		if [ -n "$$PROTO_FILES" ]; then \
+			$(PROTOC) --proto_path=$(PROTO_DIR)/$@ \
+				--go_out=$$OUT_DIR --go_opt=paths=source_relative \
+				--go-grpc_out=$$OUT_DIR --go-grpc_opt=paths=source_relative \
+				$$PROTO_FILES; \
+		else \
+			echo "Skipping $@ service: No .proto files found in $(PROTO_DIR)/$@."; \
+		fi \
+	else \
+		echo "Skipping $@ service: $(PROTO_DIR)/$@ directory does not exist."; \
+	fi
+
+# Clean generated files
+clean:
+	@echo "Cleaning generated files..."
+	rm -rf $(GO_OUT_DIR)/*
+
+# Install necessary protoc plugins
+install-plugins:
+	@echo "Installing protoc-gen-go and protoc-gen-go-grpc..."
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+# Check if protoc is installed
+check-protoc:
+ifndef PROTOC
+	$(error "protoc is not installed. Please install Protocol Buffers compiler.")
+endif
+
+# Prepare for build by generating protobuf files
+prepare: check-protoc generate
+
+# Build target (add your actual build commands here)
+build: prepare
+	@echo "Building the project..."
+	# Add your go build commands here
+
+.PHONY: all generate $(SERVICES) clean install-plugins check-protoc help prepare build
+
+# Help target
+help:
+	@echo "Makefile for Chemist.ke"
+	@echo ""
+	@echo "Targets:"
+	@echo "  generate     : Generate Go code from all .proto files"
+	@echo "  clean        : Remove all generated files"
+	@echo "  install-plugins : Install necessary protoc plugins"
+	@echo "  check-protoc : Check if protoc is installed"
+	# Database migration
+	@echo "  create NAME=<name>    Create a new migration with the given name"
+	@echo "  up                    Apply all available migrations"
+	@echo "  down                  Roll back the last migration"
+	@echo "  status                Print the status of all migrations"
+	@echo "  help                  Show this help message"
+	@echo "  help         : Show this help message"
+
+GOOSE_DRIVER ?= postgres
+GOOSE_DBSTRING ?= postgres://kelche:kelche@localhost:5432/chemist_ke
+GOOSE_MIGRATION_DIR ?= internal/database/migrations/
+NO_COLOR ?= 0
+
+ifeq ($(NO_COLOR), 1)
+COLOR_FLAG=--no-color
+else
+COLOR_FLAG=
+endif
+
+.PHONY: db-create
+db-create:
+	@read -p "Enter migration name: " NAME; \
+	goose -dir $(GOOSE_MIGRATION_DIR) $(COLOR_FLAG) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" create $$NAME sql
+
+.PHONY: db-up
+db-up:
+	@echo $(GOOSE_DBSTRING)
+	goose -dir $(GOOSE_MIGRATION_DIR) $(COLOR_FLAG) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" up
+
+
+.PHONY: db-down
+db-down:
+	goose -dir $(GOOSE_MIGRATION_DIR) $(COLOR_FLAG) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" down
+
+.PHONY: db-status
+db-status:
+	goose -dir $(GOOSE_MIGRATION_DIR) $(COLOR_FLAG) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" status
