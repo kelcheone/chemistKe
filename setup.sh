@@ -22,6 +22,8 @@ create_dirs "pkg" cache config errors utils
 create_dirs "api" proto swagger
 create_dirs "api/proto" user product order telehealth cms notification
 create_dirs "deployments" docker kubernetes
+#  where grpc service clients will be written
+create_dirs "pkg" client
 create_dirs "test" integration load
 create_dirs "web" admin
 
