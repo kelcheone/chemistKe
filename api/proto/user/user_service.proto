@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package user_proto;
+
+option go_package = "github.com/kelcheone/chemistke/api/proto/user_proto";
+
+// add, get, delete, update, multiple-paginated
+service UserService {
+  rpc AddUser(AddUserRequest) returns (AddUserResponse) {}
+  rpc GetUser(GetUserRequest) returns (GetUserResponse) {}
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserByEmailResponse) {}
+  rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse) {}
+  rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse) {}
+  rpc GetUsers(GetUsersRequest) returns (GetUsersResponse) {}
+}
+
+message UUID {
+  string value = 1;
+}
+
+message User {
+  UUID id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
+}
+
+
+message AddUserRequest {
+    User user = 1;
+  }
+
+message GetUserResponse {
+    User user = 1;
+  }
+
+message GetUserByEmailResponse {
+    User user = 1;
+  }
+
+message GetUsersResponse {
+  repeated User users = 1;
+  int32 limit = 2;
+  int32 page = 3;
+}
+
+message GetUsersRequest {
+  int32 limit = 1;
+  int32 page = 2;
+}
+
+message Empty {}
+
+message GetUserRequest {
+  UUID id = 1;
+}
+
+message GetUserByEmailRequest {
+  string email = 2;
+}
+
+
+message UpdateUserRequest {
+    User user = 1;
+  }
+
+
+message DeleteUserRequest {
+  UUID id = 1;
+}
+
+message DeleteUserResponse {
+  string message = 1;
+}
+
+message UpdateUserResponse {
+  string message = 1;
+}
+message AddUserResponse {
+  string message = 1;
+  UUID id = 2;
+}
