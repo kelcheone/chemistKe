@@ -9,8 +9,11 @@ import (
 	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 
+	productservice "github.com/kelcheone/chemistke/cmd/product-service"
 	userservice "github.com/kelcheone/chemistke/cmd/user-service"
 	"github.com/kelcheone/chemistke/internal/database"
+	"github.com/kelcheone/chemistke/internal/files"
+	product_proto "github.com/kelcheone/chemistke/pkg/grpc/product"
 	user_proto "github.com/kelcheone/chemistke/pkg/grpc/user"
 )
 
@@ -40,11 +43,18 @@ func main() {
 
 	defer db.Close()
 
+	files, err := files.NewFileClient()
+	if err != nil {
+		log.Fatalf("could not connect to files: %v\n", err)
+	}
+
 	newUservice := userservice.NewService(db)
+	newProductService := productservice.NewProductService(files, db)
 
 	grpcServer := grpc.NewServer()
 
 	user_proto.RegisterUserServiceServer(grpcServer, newUservice)
+	product_proto.RegisterProductServiceServer(grpcServer, newProductService)
 	lis, err := net.Listen("tcp", ":8090")
 	if err != nil {
 		log.Fatalf("Could not start the listener: %v\n", err)
