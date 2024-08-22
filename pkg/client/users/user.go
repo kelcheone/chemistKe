@@ -29,9 +29,11 @@ func Init() error {
 
 	user := &user_proto.AddUserRequest{
 		User: &user_proto.User{
-			Name:  gofakeit.Name(),
-			Email: gofakeit.Email(),
-			Phone: gofakeit.Phone(),
+			Name:     gofakeit.Name(),
+			Email:    gofakeit.Email(),
+			Phone:    gofakeit.Phone(),
+			Password: gofakeit.Password(true, true, true, true, false, 12),
+			Role:     user_proto.UserRoles_ADMIN,
 		},
 	}
 
@@ -57,10 +59,11 @@ func Init() error {
 
 	nUser := &user_proto.UpdateUserRequest{
 		User: &user_proto.User{
-			Id:    res.Id,
-			Name:  gofakeit.Name(),
-			Email: gofakeit.Email(),
-			Phone: gofakeit.Phone(),
+			Id:       res.Id,
+			Name:     gofakeit.Name(),
+			Email:    gofakeit.Email(),
+			Phone:    gofakeit.Phone(),
+			Password: gofakeit.Password(true, true, true, true, false, 12),
 		},
 	}
 
