@@ -3,6 +3,7 @@ package userservice
 import (
 	"context"
 
+	"github.com/kelcheone/chemistke/cmd/utils"
 	"github.com/kelcheone/chemistke/internal/database"
 	pb "github.com/kelcheone/chemistke/pkg/grpc/user"
 )
@@ -18,12 +19,17 @@ func NewService(db database.DB) *UserService {
 
 func (s *UserService) AddUser(ctx context.Context, req *pb.AddUserRequest) (*pb.AddUserResponse, error) {
 	user := req.User
-	stmt := `INSERT INTO users (name, email, phone) VALUES ($1, $2, $3) RETURNING id`
+	stmt := `INSERT INTO users (name, email, phone, role, password) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 	type result struct {
 		id string
 	}
 
-	res := s.db.QueryRow(stmt, user.Name, user.Email, user.Phone)
+	hashedPassword, err := utils.Hash(user.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	res := s.db.QueryRow(stmt, user.Name, user.Email, user.Phone, user.Role, hashedPassword)
 
 	var r result
 	if err := res.Scan(&r.id); err != nil {
@@ -38,14 +44,14 @@ func (s *UserService) AddUser(ctx context.Context, req *pb.AddUserRequest) (*pb.
 }
 
 func (s *UserService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	stmt := `SELECT id, name, email, phone FROM users WHERE id=$1`
+	stmt := `SELECT id, name, email, phone, role FROM users WHERE id=$1`
 	row := s.db.QueryRow(stmt, req.Id.Value)
 
 	var gUser pb.User
 
 	var userId string
 
-	err := row.Scan(&userId, &gUser.Name, &gUser.Email, &gUser.Phone)
+	err := row.Scan(&userId, &gUser.Name, &gUser.Email, &gUser.Phone, &gUser.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -55,14 +61,14 @@ func (s *UserService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.
 }
 
 func (s *UserService) GetUserByEmail(ctx context.Context, req *pb.GetUserByEmailRequest) (*pb.GetUserByEmailResponse, error) {
-	stmt := `SELECT id, name, email, phone FROM users WHERE email=$1`
+	stmt := `SELECT id, name, email, phone, role FROM users WHERE email=$1`
 	row := s.db.QueryRow(stmt, req.Email)
 
 	var gUser pb.User
 
 	var userId string
 
-	err := row.Scan(&userId, &gUser.Name, &gUser.Email, &gUser.Phone)
+	err := row.Scan(&userId, &gUser.Name, &gUser.Email, &gUser.Phone, gUser.Role)
 	if err != nil {
 		return nil, err
 	}
@@ -72,9 +78,9 @@ func (s *UserService) GetUserByEmail(ctx context.Context, req *pb.GetUserByEmail
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
-	stmt := `UPDATE users SET name=$1, email=$2, phone=$3 WHERE id=$4`
+	stmt := `UPDATE users SET name=$1, email=$2, phone=$3, role=$4 WHERE id=$5`
 	tUser := req.User
-	_, err := s.db.Exec(stmt, tUser.Name, tUser.Email, tUser.Phone, tUser.Id.Value)
+	_, err := s.db.Exec(stmt, tUser.Name, tUser.Email, tUser.Phone, tUser.Role, tUser.Id.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +103,7 @@ func (s *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest)
 func (s *UserService) GetUsers(ctx context.Context, req *pb.GetUsersRequest) (*pb.GetUsersResponse, error) {
 	limit := req.Limit
 	page := req.Page
-	stmt := `SELECT id,name, email, phone FROM users LIMIT $1 OFFSET $2`
+	stmt := `SELECT id,name, email, phone, role FROM users LIMIT $1 OFFSET $2`
 
 	rows, err := s.db.Query(stmt, limit, page)
 	if err != nil {
@@ -109,7 +115,7 @@ func (s *UserService) GetUsers(ctx context.Context, req *pb.GetUsersRequest) (*p
 	for rows.Next() {
 		var user pb.User
 		var userId string
-		err := rows.Scan(&userId, &user.Name, &user.Email, &user.Phone)
+		err := rows.Scan(&userId, &user.Name, &user.Email, &user.Phone, &user.Role)
 		if err != nil {
 			return nil, err
 		}
