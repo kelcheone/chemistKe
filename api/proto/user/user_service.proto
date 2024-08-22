@@ -23,20 +23,21 @@ message User {
   string name = 2;
   string email = 3;
   string phone = 4;
+  string password = 5;
+  UserRoles role = 6;
 }
 
-
 message AddUserRequest {
-    User user = 1;
-  }
+  User user = 1;
+}
 
 message GetUserResponse {
-    User user = 1;
-  }
+  User user = 1;
+}
 
 message GetUserByEmailResponse {
-    User user = 1;
-  }
+  User user = 1;
+}
 
 message GetUsersResponse {
   repeated User users = 1;
@@ -59,11 +60,9 @@ message GetUserByEmailRequest {
   string email = 2;
 }
 
-
 message UpdateUserRequest {
-    User user = 1;
-  }
-
+  User user = 1;
+}
 
 message DeleteUserRequest {
   UUID id = 1;
@@ -79,4 +78,10 @@ message UpdateUserResponse {
 message AddUserResponse {
   string message = 1;
   UUID id = 2;
+}
+
+enum UserRoles {
+  ADMIN = 0;
+  USER = 1;
+  GUEST = 2;
 }
