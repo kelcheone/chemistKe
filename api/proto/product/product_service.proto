@@ -53,7 +53,6 @@ message GetProductResponse {
   Product product = 1;
 }
 
-
 message DeleteProductRequest {
   UUID id = 1;
 }

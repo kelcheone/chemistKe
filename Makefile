@@ -21,7 +21,7 @@ PROTOC := $(shell command -v protoc 2> /dev/null)
 $(shell mkdir -p $(GO_OUT_DIR))
 
 # Default target
-all: generate
+proto-all: pfmt generate
 
 # Generate Go code from all .proto files
 generate: $(SERVICES)
