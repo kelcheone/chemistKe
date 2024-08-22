@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package product_proto;
+
+option go_package = "github.com/kelcheone/chemistke/api/proto/product_proto";
+
+service ProductService {
+  rpc CreateProduct(CreateProductRequest) returns (CreateProductResponse) {}
+  rpc GetProduct(GetProductRequest) returns (GetProductResponse) {}
+  rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductResponse) {}
+  rpc UpdateProduct(UpdateProductRequest) returns (UpdateProductResponse) {}
+  rpc GetProducts(GetProductsRequest) returns (GetProductsResponse) {}
+  rpc GetProductsByCategory(GetProductsByCategoryRequest) returns (GetProductsByCategoryResponse) {}
+  rpc GetProductsBySubCategory(GetProductsBySubCategoryRequest) returns (GetProductsBySubCategoryResponse) {}
+  rpc GetProductsByBrand(GetProductsByBrandRequest) returns (GetProductsByBrandResponse) {}
+  rpc GetUploadURL(GetUploadURLRequest) returns (GetUploadURLResponse) {}
+}
+
+message Product {
+  UUID id = 1;
+  string name = 2;
+  string description = 3;
+  string category = 4;
+  string sub_category = 5;
+  string brand = 6;
+  float price = 7;
+  int32 quantity = 8;
+  repeated Image images = 9;
+}
+
+message UUID {
+  string value = 1;
+}
+
+message Image {
+  string url = 1;
+}
+
+message CreateProductRequest {
+  Product product = 1;
+}
+
+message CreateProductResponse {
+  string message = 1;
+  UUID id = 2;
+}
+
+message GetProductRequest {
+  UUID id = 1;
+}
+
+message GetProductResponse {
+  Product product = 1;
+}
+
+
+message DeleteProductRequest {
+  UUID id = 1;
+}
+
+message DeleteProductResponse {
+  string message = 1;
+}
+
+message UpdateProductRequest {
+  Product product = 1;
+}
+
+message UpdateProductResponse {
+  string message = 1;
+}
+
+message GetProductsRequest {
+  int32 limit = 1;
+  int32 page = 2;
+}
+
+message GetProductsResponse {
+  repeated Product products = 1;
+  int32 limit = 2;
+  int32 page = 3;
+}
+
+message Empty {}
+
+message GetProductsByCategoryRequest {
+  string category = 1;
+  int32 limit = 2;
+  int32 page = 3;
+}
+
+message GetProductsByCategoryResponse {
+  repeated Product products = 1;
+  int32 limit = 2;
+  int32 page = 3;
+}
+
+message GetProductsBySubCategoryRequest {
+  string sub_category = 1;
+  int32 limit = 2;
+  int32 page = 3;
+}
+
+message GetProductsBySubCategoryResponse {
+  repeated Product products = 1;
+  int32 limit = 2;
+  int32 page = 3;
+}
+
+message GetProductsByBrandRequest {
+  string brand = 1;
+  int32 limit = 2;
+  int32 page = 3;
+}
+
+message GetProductsByBrandResponse {
+  repeated Product products = 1;
+  int32 limit = 2;
+  int32 page = 3;
+}
+
+message GetUploadURLRequest {
+  UUID id = 1;
+  UUID userID = 2;
+  string FileName = 3;
+}
+
+message GetUploadURLResponse {
+  string url = 1;
+}
