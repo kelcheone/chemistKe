@@ -1,13 +1,18 @@
-# Load .env file
-# ifneq (,$(wildcard ./.env))
-# 	include .env
-# 	export
-# endif
-
 # Variables
 PROTO_DIR := api/proto
 GO_OUT_DIR := pkg/grpc
 SERVICES := user product order telehealth cms notification
+
+# export all variables found in the .env file
+# include .env
+# export $(shell sed 's/=.*//' .env)
+
+
+# Database migration variables
+GOOSE_DBSTRING ?= postgres://kelche:kelche@localhost:5432/chemist_ke
+GOOSE_DRIVER ?= postgres
+GOOSE_MIGRATION_DIR ?= internal/database/migrations
+
 
 # Check for protoc installation
 PROTOC := $(shell command -v protoc 2> /dev/null)
@@ -84,10 +89,20 @@ help:
 	@echo "  help                  Show this help message"
 	@echo "  help         : Show this help message"
 
-GOOSE_DRIVER ?= postgres
-GOOSE_DBSTRING ?= postgres://kelche:kelche@localhost:5432/chemist_ke
-GOOSE_MIGRATION_DIR ?= internal/database/migrations/
-NO_COLOR ?= 0
+
+
+# make sure the GOOSE_DBSTRING , GOOSE_DRIVER and GOOSE_MIGRATION_DIR are set
+ifndef GOOSE_DBSTRING
+$(error GOOSE_DBSTRING is not set)
+endif
+
+ifndef GOOSE_DRIVER
+$(error GOOSE_DRIVER is not set)
+endif
+
+ifndef GOOSE_MIGRATION_DIR
+$(error GOOSE_MIGRATION_DIR is not set)
+endif
 
 ifeq ($(NO_COLOR), 1)
 COLOR_FLAG=--no-color
@@ -113,3 +128,8 @@ db-down:
 .PHONY: db-status
 db-status:
 	goose -dir $(GOOSE_MIGRATION_DIR) $(COLOR_FLAG) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" status
+
+.PHONY: pfmt
+# Format the proto files using buf format command pipe the result to the specific file
+pfmt:
+	buf format  $(PROTO_DIR)  -w
