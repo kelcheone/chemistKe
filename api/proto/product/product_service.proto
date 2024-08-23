@@ -14,6 +14,7 @@ service ProductService {
   rpc GetProductsBySubCategory(GetProductsBySubCategoryRequest) returns (GetProductsBySubCategoryResponse) {}
   rpc GetProductsByBrand(GetProductsByBrandRequest) returns (GetProductsByBrandResponse) {}
   rpc GetUploadURL(GetUploadURLRequest) returns (GetUploadURLResponse) {}
+  rpc GetProductImages(GetProductImagesRequest) returns (GetProductImagesResponse) {}
 }
 
 message Product {
@@ -126,4 +127,12 @@ message GetUploadURLRequest {
 
 message GetUploadURLResponse {
   string url = 1;
+}
+
+message GetProductImagesRequest {
+  UUID productId = 1;
+}
+
+message GetProductImagesResponse {
+  repeated string urls = 1;
 }

@@ -262,3 +262,18 @@ func (s *ProductService) GetUploadURL(ctx context.Context, req *pb.GetUploadURLR
 		Url: url,
 	}, nil
 }
+
+// So to access the images of a given product. enpoint/products/productId/[images...]
+
+func (s *ProductService) GetProductImages(ctx context.Context, req *pb.GetProductImagesRequest) (*pb.GetProductImagesResponse, error) {
+	// the images are found in the bucketname/products/images
+	images, err := s.files.GetProductImages(ctx, req.ProductId.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetProductImagesResponse{
+		Urls: images,
+	}, nil
+
+}
