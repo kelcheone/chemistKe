@@ -26,7 +26,7 @@ func Init() error {
 	defer conn.Close()
 
 	c := product_proto.NewProductServiceClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 
 	defer cancel()
 
@@ -95,6 +95,16 @@ func Init() error {
 	if err != nil {
 		return err
 	}
+	sT := time.Now()
+	images, err := c.GetProductImages(ctx, &product_proto.GetProductImagesRequest{ProductId: createRes.Id})
+	if err != nil {
+		log.Fatalf("Could not get images: %v\n", err)
+	}
+
+	for i, image := range images.Urls {
+		fmt.Printf("%d ----------> %s\n", i, image)
+	}
+	fmt.Println(time.Since(sT))
 
 	return nil
 }
@@ -111,7 +121,16 @@ func uploadFile(filePath string, url string) error {
 		return err
 	}
 	request.Header.Set("Content-Type", "multipart/form-data")
+	// 'x-amz-acl': 'public-read' -- This header is required for public read ACL for Digital ocean
+	request.Header.Set("x-amz-acl", "public-read")
 	client := &http.Client{}
-	_, err = client.Do(request)
+	resp, err := client.Do(request)
+
+	if resp.StatusCode == http.StatusOK {
+		fmt.Println("Upload successful")
+	} else {
+		body, _ := io.ReadAll(resp.Body)
+		fmt.Printf("Upload failed. Status: %s, Body: %s\n", resp.Status, string(body))
+	}
 	return err
 }
