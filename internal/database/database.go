@@ -17,6 +17,10 @@ type Database struct {
 	*sql.DB
 }
 
+func NewRawDB(db *sql.DB) DB {
+	return &Database{db}
+}
+
 func NewDatabase(driverName, dataSourceName string) (DB, error) {
 	db, err := sql.Open(driverName, dataSourceName)
 	if err != nil {
