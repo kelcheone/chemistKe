@@ -72,4 +72,7 @@ func (f *Files) GetProductImages(ctx context.Context, productId string) ([]strin
 	return images, nil
 }
 
+// func (f *Files) DeleteProductImage(ctx context.Context, imageURL string) (string, error)
+// func (f *Files) DeleteProductImages(ctx context.Context, productId string) (string, error)
+
 // in this style you get the product images by the product id then you can use the url to get the images. it is the same as storing the images in the database but this time you store the images in the cloud storage. Later I'll add a cache layer to cache the images for a certain period of time. This is to reduce the number of requests made to the cloud storage when getting the urls of the images.
