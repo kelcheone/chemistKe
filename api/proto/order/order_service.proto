@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package order_proto;
+
+option go_package = "github.com/kelcheone/chemistke/api/proto/order_proto";
+
+service OrderService {
+  rpc OrderProduct(OrderProductRequest) returns (OrderProductResponse) {}
+  rpc GetUserOrders(GetUserOrdersRequest) returns (GetUserOrdersResponse) {}
+  rpc GetOrder(GetOrderRequest) returns (GetOrderResponse) {}
+  rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse) {}
+  rpc UpdateOrder(UpdateOrderRequest) returns (UpdateOrderResponse) {}
+  rpc DelteOrder(DelteOrderRequest) returns (DelteOrderResponse) {}
+}
+
+message Order {
+  UUID id = 1;
+  UUID user_id = 2;
+  UUID product_id = 3;
+  string status = 4;
+  int32 quantity = 5;
+  float total = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message UUID {
+  string value = 1;
+}
+
+message Status {
+  oneof status {
+    string pending = 1;
+    string processing = 2;
+    string completed = 3;
+    string cancelled = 4;
+  }
+}
+
+message OrderProductRequest {
+  UUID user_id = 1;
+  UUID product_id = 2;
+  int32 quantity = 3;
+  float total = 4;
+}
+
+message OrderProductResponse {
+  Order order = 1;
+  string message = 2;
+}
+
+message GetUserOrdersRequest {
+  UUID user_id = 1;
+  int32 Limit = 2;
+  int32 Page = 3;
+}
+
+message GetUserOrdersResponse {
+  repeated Order orders = 1;
+  string message = 2;
+}
+
+message GetOrderRequest {
+  UUID order_id = 1;
+}
+
+message GetOrderResponse {
+  Order order = 1;
+  string message = 2;
+}
+
+message GetOrdersRequest {
+  int32 Limit = 1;
+  int32 Page = 2;
+}
+
+message GetOrdersResponse {
+  repeated Order orders = 1;
+  string message = 2;
+}
+
+message UpdateOrderRequest {
+  UUID order_id = 1;
+  Status status = 2;
+  int32 quantity = 3;
+  float total = 4;
+
+}
+
+message UpdateOrderResponse {
+  Order order = 1;
+  string message = 2;
+}
+
+message DelteOrderRequest {
+  UUID order_id = 1;
+}
+
+message DelteOrderResponse {
+  string message = 1;
+}

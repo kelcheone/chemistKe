@@ -3,7 +3,8 @@ package main
 import (
 	"log"
 
-	productsClient "github.com/kelcheone/chemistke/pkg/client/products"
+	ordersClient "github.com/kelcheone/chemistke/pkg/client/orders"
+	// productsClient "github.com/kelcheone/chemistke/pkg/client/products"
 	// userClient "github.com/kelcheone/chemistke/pkg/client/users"
 )
 
@@ -12,8 +13,11 @@ func main() {
 	// 	// log.Fatalf("Could not run user client: %v\n", err)
 	// 	log.Fatalln(err)
 	// }
-	if err := productsClient.Init(); err != nil {
-		// log.Fatalf("Could not run user client: %v\n", err)
+	// if err := productsClient.Init(); err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	if err := ordersClient.Init(); err != nil {
 		log.Fatalln(err)
 	}
 }
