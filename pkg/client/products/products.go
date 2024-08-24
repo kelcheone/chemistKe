@@ -41,15 +41,15 @@ func Init() error {
 		Quantity:    int32(gofakeit.Number(0, 100)),
 	}
 
-	createRes, err := c.CreateProduct(ctx, &product_proto.CreateProductRequest{Product: product})
-	if err != nil {
-		log.Fatalf("Could not create product %v\n", err)
-	}
+	createRes := CreateProduct(ctx, c)
+	// if err != nil {
+	// 	log.Fatalf("Could not create product %v\n", err)
+	// }
 
 	fmt.Printf("%+v\n", createRes)
 
 	// ------------- GET PRODUCT -------------
-	getRes, err := c.GetProduct(ctx, &product_proto.GetProductRequest{Id: createRes.Id})
+	getRes, err := c.GetProduct(ctx, &product_proto.GetProductRequest{Id: &product_proto.UUID{Value: createRes}})
 	if err != nil {
 		log.Fatalf("Could not get product %v\n", err)
 	}
@@ -57,7 +57,7 @@ func Init() error {
 	fmt.Printf("%+v\n", getRes)
 
 	// ------------- UPDATE PRODUCT -------------
-	product.Id = createRes.Id
+	product.Id = &product_proto.UUID{Value: createRes}
 	product.Name = gofakeit.Product().Name
 	product.Description = gofakeit.Product().Description
 	product.Category = gofakeit.ProductCategory()
@@ -87,7 +87,7 @@ func Init() error {
 		fmt.Printf("%d------> %s, \t kes%.2f\n", i, p.Name, p.Price)
 	}
 
-	url, err := c.GetUploadURL(ctx, &product_proto.GetUploadURLRequest{Id: createRes.Id, FileName: "image1.png"})
+	url, err := c.GetUploadURL(ctx, &product_proto.GetUploadURLRequest{Id: &product_proto.UUID{Value: createRes}, FileName: "image1.png"})
 	fmt.Printf("%+v\n", url)
 
 	imagePath := "./public/images/image1.png"
@@ -96,7 +96,7 @@ func Init() error {
 		return err
 	}
 	sT := time.Now()
-	images, err := c.GetProductImages(ctx, &product_proto.GetProductImagesRequest{ProductId: createRes.Id})
+	images, err := c.GetProductImages(ctx, &product_proto.GetProductImagesRequest{ProductId: &product_proto.UUID{Value: createRes}})
 	if err != nil {
 		log.Fatalf("Could not get images: %v\n", err)
 	}
@@ -133,4 +133,39 @@ func uploadFile(filePath string, url string) error {
 		fmt.Printf("Upload failed. Status: %s, Body: %s\n", resp.Status, string(body))
 	}
 	return err
+}
+
+func CreateProduct(ctx context.Context, c product_proto.ProductServiceClient) string {
+	product := &product_proto.Product{
+		Name:        gofakeit.Product().Name,
+		Description: gofakeit.Product().Description,
+		Category:    gofakeit.ProductCategory(),
+		SubCategory: gofakeit.Product().Categories[0],
+		Brand:       gofakeit.Company(),
+		Price:       float32(gofakeit.Product().Price),
+		Quantity:    int32(gofakeit.Number(0, 100)),
+	}
+
+	createRes, err := c.CreateProduct(ctx, &product_proto.CreateProductRequest{Product: product})
+	if err != nil {
+		log.Fatalf("Could not create product %v\n", err)
+	}
+
+	return createRes.Id.Value
+}
+
+func GetProduct(ctx context.Context, c product_proto.ProductServiceClient, id string) (*product_proto.Product, error) {
+	getRes, err := c.GetProduct(
+		ctx,
+		&product_proto.GetProductRequest{
+			Id: &product_proto.UUID{
+				Value: id,
+			},
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return getRes.Product, nil
 }
