@@ -10,7 +10,7 @@ service OrderService {
   rpc GetOrder(GetOrderRequest) returns (GetOrderResponse) {}
   rpc GetOrders(GetOrdersRequest) returns (GetOrdersResponse) {}
   rpc UpdateOrder(UpdateOrderRequest) returns (UpdateOrderResponse) {}
-  rpc DelteOrder(DelteOrderRequest) returns (DelteOrderResponse) {}
+  rpc DeleteOrder(DeleteOrderRequest) returns (DeleteOrderResponse) {}
 }
 
 message Order {
@@ -26,15 +26,6 @@ message Order {
 
 message UUID {
   string value = 1;
-}
-
-message Status {
-  oneof status {
-    string pending = 1;
-    string processing = 2;
-    string completed = 3;
-    string cancelled = 4;
-  }
 }
 
 message OrderProductRequest {
@@ -81,7 +72,7 @@ message GetOrdersResponse {
 
 message UpdateOrderRequest {
   UUID order_id = 1;
-  Status status = 2;
+  string status = 2;
   int32 quantity = 3;
   float total = 4;
 
@@ -92,10 +83,10 @@ message UpdateOrderResponse {
   string message = 2;
 }
 
-message DelteOrderRequest {
+message DeleteOrderRequest {
   UUID order_id = 1;
 }
 
-message DelteOrderResponse {
+message DeleteOrderResponse {
   string message = 1;
 }
