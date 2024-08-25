@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 
 	_ "github.com/lib/pq"
@@ -10,6 +11,7 @@ type DB interface {
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
+	QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
 	Close() error
 }
 
