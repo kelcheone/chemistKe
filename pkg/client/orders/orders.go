@@ -56,9 +56,63 @@ func Init() error {
 		Quantity:  newOrder.Quantity,
 		Total:     newOrder.Total,
 	})
-	fmt.Println("-----order Creted ---------")
+	fmt.Println("-----order Created ---------")
 
-	fmt.Printf("%+v\n", order)
+	fmt.Printf("%+v\n", order.Order.Id)
 
+	// get orders-----
+	gOrder, err := c.GetOrder(ctx, &order_proto.GetOrderRequest{OrderId: order.Order.Id})
+	if err != nil {
+		return err
+	}
+	fmt.Println("----- query sucessfull ---------")
+	fmt.Printf("%+v\n", gOrder)
+
+	// update product
+	upOrder, err := c.UpdateOrder(
+		ctx,
+		&order_proto.UpdateOrderRequest{
+			OrderId:  order.Order.Id,
+			Status:   "processing",
+			Quantity: 8,
+			Total:    8 * product.Price,
+		})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("--------- Order updated ------")
+	fmt.Printf("%+v\n", upOrder)
+
+	// get userOrders
+	userOrders, err := c.GetUserOrders(ctx, &order_proto.GetUserOrdersRequest{UserId: order.Order.Id, Limit: 8, Page: 1})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("--------- Getting user orders sucessfull ------")
+
+	for i, uOrder := range userOrders.Orders {
+		fmt.Printf("%d ----> %+v\n", i, uOrder)
+	}
+
+	gOrders, err := c.GetOrders(ctx, &order_proto.GetOrdersRequest{Limit: 10, Page: 1})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("--------- Getting orders sucessfull ------")
+
+	for i, uOrder := range gOrders.Orders {
+		fmt.Printf("%d ----> %+v\n", i, uOrder)
+	}
+
+	delRes, err := c.DeleteOrder(ctx, &order_proto.DeleteOrderRequest{OrderId: gOrder.Order.Id})
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("--------- Deleting orders sucessfull ------")
+	fmt.Printf("%+v\n", delRes)
 	return nil
 }
