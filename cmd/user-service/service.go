@@ -2,10 +2,13 @@ package userservice
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/kelcheone/chemistke/cmd/utils"
 	"github.com/kelcheone/chemistke/internal/database"
+	"github.com/kelcheone/chemistke/pkg/codes"
 	pb "github.com/kelcheone/chemistke/pkg/grpc/user"
+	"github.com/kelcheone/chemistke/pkg/status"
 )
 
 type UserService struct {
@@ -26,14 +29,17 @@ func (s *UserService) AddUser(ctx context.Context, req *pb.AddUserRequest) (*pb.
 
 	hashedPassword, err := utils.Hash(user.Password)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
 	res := s.db.QueryRow(stmt, user.Name, user.Email, user.Phone, user.Role, hashedPassword)
 
 	var r result
 	if err := res.Scan(&r.id); err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "could not create user")
 	}
 
 	response := &pb.AddUserResponse{
@@ -53,7 +59,10 @@ func (s *UserService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.
 
 	err := row.Scan(&userId, &gUser.Name, &gUser.Email, &gUser.Phone, &gUser.Role)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error fetching user")
 	}
 	gUser.Id = &pb.UUID{Value: userId}
 
@@ -70,7 +79,10 @@ func (s *UserService) GetUserByEmail(ctx context.Context, req *pb.GetUserByEmail
 
 	err := row.Scan(&userId, &gUser.Name, &gUser.Email, &gUser.Phone, gUser.Role)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "use with email %s not found", req.Email)
+		}
+		return nil, status.Errorf(codes.Internal, "error fetching user with email %s", req.Email)
 	}
 	gUser.Id = &pb.UUID{Value: userId}
 
@@ -82,7 +94,10 @@ func (s *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest)
 	tUser := req.User
 	_, err := s.db.Exec(stmt, tUser.Name, tUser.Email, tUser.Phone, tUser.Role, tUser.Id.Value)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "could not update user")
 	}
 	return &pb.UpdateUserResponse{
 		Message: "user updated sucessfully",
@@ -93,7 +108,10 @@ func (s *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest)
 	stmt := `DELETE FROM users WHERE id=$1`
 	_, err := s.db.Exec(stmt, req.Id.Value)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "user not found")
+		}
+		return nil, status.Errorf(codes.Internal, "could not delete user")
 	}
 	return &pb.DeleteUserResponse{
 		Message: "sucessfully deleted user",
@@ -107,7 +125,7 @@ func (s *UserService) GetUsers(ctx context.Context, req *pb.GetUsersRequest) (*p
 
 	rows, err := s.db.Query(stmt, limit, page)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "could not fetch users")
 	}
 
 	var users []*pb.User
@@ -117,7 +135,7 @@ func (s *UserService) GetUsers(ctx context.Context, req *pb.GetUsersRequest) (*p
 		var userId string
 		err := rows.Scan(&userId, &user.Name, &user.Email, &user.Phone, &user.Role)
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "error scanning user")
 		}
 		user.Id = &pb.UUID{Value: userId}
 		users = append(users, &user)

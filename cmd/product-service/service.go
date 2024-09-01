@@ -2,12 +2,15 @@ package productservice
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/kelcheone/chemistke/internal/database"
 	"github.com/kelcheone/chemistke/internal/files"
+	"github.com/kelcheone/chemistke/pkg/codes"
 	pb "github.com/kelcheone/chemistke/pkg/grpc/product"
+	"github.com/kelcheone/chemistke/pkg/status"
 )
 
 type ProductService struct {
@@ -37,7 +40,10 @@ func (s *ProductService) CreateProduct(ctx context.Context, req *pb.CreateProduc
 		product.Quantity,
 	).Scan(&productId)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "product not found")
+		}
+		return nil, status.Errorf(codes.Internal, "error creating product: %v", err)
 	}
 
 	return &pb.CreateProductResponse{
@@ -63,7 +69,10 @@ func (s *ProductService) GetProduct(ctx context.Context, req *pb.GetProductReque
 		&product.Quantity,
 	)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "product with id %s not found", req.Id.Value)
+		}
+		return nil, status.Errorf(codes.Internal, "error getting product: %v", err)
 	}
 	product.Id = &pb.UUID{Value: productId}
 	return &pb.GetProductResponse{
@@ -75,7 +84,10 @@ func (s *ProductService) DeleteProduct(ctx context.Context, req *pb.DeleteProduc
 	stmt := `DELETE FROM products WHERE id=$1`
 	_, err := s.db.Exec(stmt, req.Id.Value)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "product with id %s does not exist", req.Id.Value)
+		}
+		return nil, status.Errorf(codes.Internal, "error deleting product: %v", err)
 	}
 	return &pb.DeleteProductResponse{Message: "product deleted successfully"}, nil
 }
@@ -95,7 +107,10 @@ func (s *ProductService) UpdateProduct(ctx context.Context, req *pb.UpdateProduc
 		product.Id.Value,
 	)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "product with id %s not found", product.Id.Value)
+		}
+		return nil, status.Errorf(codes.Internal, "error updating product: %v", err)
 	}
 	return &pb.UpdateProductResponse{
 		Message: "product update successfully",
@@ -106,7 +121,7 @@ func (s *ProductService) GetProducts(ctx context.Context, req *pb.GetProductsReq
 	stmt := `SELECT id, name, description, category, sub_category, brand, price, quantity FROM products LIMIT $1 OFFSET $2`
 	rows, err := s.db.Query(stmt, req.Limit, req.Page)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "error getting products: %v", err)
 	}
 
 	var products []*pb.Product
@@ -125,7 +140,7 @@ func (s *ProductService) GetProducts(ctx context.Context, req *pb.GetProductsReq
 			&product.Quantity,
 		)
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "error scanning products: %v", err)
 		}
 		product.Id = &pb.UUID{Value: productId}
 
@@ -143,7 +158,7 @@ func (s *ProductService) GetProductsByCategory(ctx context.Context, req *pb.GetP
 	stmt := `SELECT id, name, description, category, sub_category, brand, price, quantity FROM products WHERE category=$1 LIMIT $2 OFFSET $3`
 	rows, err := s.db.Query(stmt, req.Category, req.Limit, req.Page)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "error getting products by category: %v", err)
 	}
 
 	var products []*pb.Product
@@ -162,7 +177,7 @@ func (s *ProductService) GetProductsByCategory(ctx context.Context, req *pb.GetP
 			&product.Quantity,
 		)
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "error scanning products: %v", err)
 		}
 		product.Id = &pb.UUID{Value: productId}
 
@@ -180,7 +195,7 @@ func (s *ProductService) GetProductsBySubCategory(ctx context.Context, req *pb.G
 	stmt := `SELECT id, name, description, category, sub_category, brand, price, quantity FROM products WHERE sub_category=$1 LIMIT $2 OFFSET $3`
 	rows, err := s.db.Query(stmt, req.SubCategory, req.Limit, req.Page)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "error getting products by sub category: %v", err)
 	}
 
 	var products []*pb.Product
@@ -199,7 +214,7 @@ func (s *ProductService) GetProductsBySubCategory(ctx context.Context, req *pb.G
 			&product.Quantity,
 		)
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "error scanning products: %v", err)
 		}
 		product.Id = &pb.UUID{Value: productId}
 
@@ -217,7 +232,7 @@ func (s *ProductService) GetProductsByBrand(ctx context.Context, req *pb.GetProd
 	stmt := `SELECT id, name, description, category, sub_category, brand, price, quantity FROM products WHERE brand=$1 LIMIT $2 OFFSET $3`
 	rows, err := s.db.Query(stmt, req.Brand, req.Limit, req.Page)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "error getting products by brand: %v", err)
 	}
 
 	var products []*pb.Product
@@ -236,7 +251,7 @@ func (s *ProductService) GetProductsByBrand(ctx context.Context, req *pb.GetProd
 			&product.Quantity,
 		)
 		if err != nil {
-			return nil, err
+			return nil, status.Errorf(codes.Internal, "error scanning products: %v", err)
 		}
 		product.Id = &pb.UUID{Value: productId}
 
@@ -256,7 +271,7 @@ func (s *ProductService) GetUploadURL(ctx context.Context, req *pb.GetUploadURLR
 	key := fmt.Sprintf("products/%s/%d_%s", req.Id.Value, randId, req.FileName)
 	url, err := s.files.GetPresignedURL(key)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "error getting presigned url: %v", err)
 	}
 	return &pb.GetUploadURLResponse{
 		Url: url,
@@ -269,11 +284,10 @@ func (s *ProductService) GetProductImages(ctx context.Context, req *pb.GetProduc
 	// the images are found in the bucketname/products/images
 	images, err := s.files.GetProductImages(ctx, req.ProductId.Value)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "error getting product images: %v", err)
 	}
 
 	return &pb.GetProductImagesResponse{
 		Urls: images,
 	}, nil
-
 }
