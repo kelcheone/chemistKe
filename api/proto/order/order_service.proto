@@ -75,7 +75,6 @@ message UpdateOrderRequest {
   string status = 2;
   int32 quantity = 3;
   float total = 4;
-
 }
 
 message UpdateOrderResponse {
