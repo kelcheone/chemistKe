@@ -3,7 +3,8 @@ package main
 import (
 	"log"
 
-	ordersClient "github.com/kelcheone/chemistke/pkg/client/orders"
+	cmsClient "github.com/kelcheone/chemistke/pkg/client/cms"
+	// ordersClient "github.com/kelcheone/chemistke/pkg/client/orders"
 	// productsClient "github.com/kelcheone/chemistke/pkg/client/products"
 	// userClient "github.com/kelcheone/chemistke/pkg/client/users"
 )
@@ -17,7 +18,10 @@ func main() {
 	// 	log.Fatalln(err)
 	// }
 
-	if err := ordersClient.Init(); err != nil {
+	// if err := ordersClient.Init(); err != nil {
+	// 	log.Fatalln(err)
+	// }
+	if err := cmsClient.Init(); err != nil {
 		log.Fatalln(err)
 	}
 }
