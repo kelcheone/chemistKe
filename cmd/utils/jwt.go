@@ -2,14 +2,21 @@ package utils
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 )
 
-var secretKey = []byte("secret-key")
+var secretKey []byte
+
+func int() {
+	godotenv.Load()
+	secretKey = []byte(os.Getenv("JWT_SECRET_KEY"))
+}
 
 type jwtCustomClaims struct {
 	Id    string `json:"id"`
@@ -71,7 +78,7 @@ func VerifyToken(tokenString string) error {
 	}
 
 	if !token.Valid {
-		return fmt.Errorf("ivalid token")
+		return fmt.Errorf("invalid token")
 	}
 
 	return nil
