@@ -20,7 +20,10 @@ func NewCmsService(db database.DB) *CmsService {
 	return &CmsService{db: db}
 }
 
-func (c *CmsService) CreatePost(ctx context.Context, req *pb.CreatePostRequest) (*pb.CreatePostResponse, error) {
+func (c *CmsService) CreatePost(
+	ctx context.Context,
+	req *pb.CreatePostRequest,
+) (*pb.CreatePostResponse, error) {
 	stmt := `INSERT INTO content (
   published_date,
   updated_date,
@@ -49,7 +52,11 @@ func (c *CmsService) CreatePost(ctx context.Context, req *pb.CreatePostRequest) 
 	)
 	var postId string
 	if err := row.Scan(&postId); err != nil {
-		return nil, status.Errorf(codes.Internal, "could not get post Id: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not get post Id: %v",
+			err,
+		)
 	}
 
 	return &pb.CreatePostResponse{
@@ -57,7 +64,10 @@ func (c *CmsService) CreatePost(ctx context.Context, req *pb.CreatePostRequest) 
 	}, nil
 }
 
-func (c *CmsService) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.GetPostResponse, error) {
+func (c *CmsService) GetPost(
+	ctx context.Context,
+	req *pb.GetPostRequest,
+) (*pb.GetPostResponse, error) {
 	stmt := `SELECT id, published_date, updated_date, cover_image, title, description, slug, content, status, author_id, category_id FROM content WHERE id=$1`
 	// stmt := `SELECT * FROM content WHERE id=$1`
 	var post pb.Post
@@ -79,7 +89,11 @@ func (c *CmsService) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.G
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, status.Errorf(codes.NotFound, "post with id %s not found", req.PostId.Value)
+			return nil, status.Errorf(
+				codes.NotFound,
+				"post with id %s not found",
+				req.PostId.Value,
+			)
 		}
 		return nil, status.Errorf(codes.Internal, "error getting post: %v", err)
 	}
@@ -90,7 +104,10 @@ func (c *CmsService) GetPost(ctx context.Context, req *pb.GetPostRequest) (*pb.G
 	return &pb.GetPostResponse{Post: &post}, nil
 }
 
-func (c *CmsService) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest) (*pb.UpdatePostResponse, error) {
+func (c *CmsService) UpdatePost(
+	ctx context.Context,
+	req *pb.UpdatePostRequest,
+) (*pb.UpdatePostResponse, error) {
 	stmt := `UPDATE content SET published_date=$1, updated_date=$2, cover_image=$3, title=$4, slug=$5, content=$6, status=$7, author_id=$8, category_id=$9, description=$10 WHERE id=$11 RETURNING id`
 	post := req.Post
 	_, err := c.db.Exec(
@@ -111,13 +128,20 @@ func (c *CmsService) UpdatePost(ctx context.Context, req *pb.UpdatePostRequest) 
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "post does not exist")
 		}
-		return nil, status.Errorf(codes.Internal, "could not update post: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not update post: %v",
+			err,
+		)
 	}
 
 	return &pb.UpdatePostResponse{PostId: post.PostId}, nil
 }
 
-func (c *CmsService) DeletePost(ctx context.Context, req *pb.DeletePostRequest) (*pb.DeletePostResponse, error) {
+func (c *CmsService) DeletePost(
+	ctx context.Context,
+	req *pb.DeletePostRequest,
+) (*pb.DeletePostResponse, error) {
 	stmt := `DELETE FROM content WHERE id=$1`
 	_, err := c.db.Exec(stmt, req.PostId.Value)
 	if err != nil {
@@ -129,13 +153,20 @@ func (c *CmsService) DeletePost(ctx context.Context, req *pb.DeletePostRequest) 
 	return nil, nil
 }
 
-func (c *CmsService) ListPosts(ctx context.Context, req *pb.ListPostsRequest) (*pb.ListPostsResponse, error) {
+func (c *CmsService) ListPosts(
+	ctx context.Context,
+	req *pb.ListPostsRequest,
+) (*pb.ListPostsResponse, error) {
 	stmt := `SELECT id, published_date, updated_date, cover_image, title, description,
   slug, content, status, author_id, category_id FROM content LIMIT $1 OFFSET $2`
 
 	rows, err := c.db.Query(stmt, req.PerPage, req.Page)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "query not successful: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"query not successful: %v",
+			err.Error(),
+		)
 	}
 
 	var posts []*pb.Post
@@ -153,18 +184,35 @@ func (c *CmsService) ListPosts(ctx context.Context, req *pb.ListPostsRequest) (*
 	return &pb.ListPostsResponse{Posts: posts}, nil
 }
 
-func (c *CmsService) CreateCategory(ctx context.Context, req *pb.CreateCategoryRequest) (*pb.CreateCategoryResponse, error) {
+func (c *CmsService) CreateCategory(
+	ctx context.Context,
+	req *pb.CreateCategoryRequest,
+) (*pb.CreateCategoryResponse, error) {
 	stmt := `INSERT INTO categories (name, slug, description) VALUES($1, $2, $3) RETURNING id`
-	row := c.db.QueryRow(stmt, req.Category.Name, req.Category.Slug, req.Category.Description)
+	row := c.db.QueryRow(
+		stmt,
+		req.Category.Name,
+		req.Category.Slug,
+		req.Category.Description,
+	)
 	var categoryId string
 	err := row.Scan(&categoryId)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could not get the category id: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not get the category id: %v",
+			err,
+		)
 	}
-	return &pb.CreateCategoryResponse{CategoryId: &pb.UUID{Value: categoryId}}, nil
+	return &pb.CreateCategoryResponse{
+		CategoryId: &pb.UUID{Value: categoryId},
+	}, nil
 }
 
-func (c *CmsService) GetCategory(ctx context.Context, req *pb.GetCategoryRequest) (*pb.GetCategoryResponse, error) {
+func (c *CmsService) GetCategory(
+	ctx context.Context,
+	req *pb.GetCategoryRequest,
+) (*pb.GetCategoryResponse, error) {
 	stmt := `SELECT id, name, slug, description FROM categories WHERE id=$1`
 	row := c.db.QueryRow(stmt, req.CategoryId.Value)
 	var category pb.Category
@@ -177,15 +225,26 @@ func (c *CmsService) GetCategory(ctx context.Context, req *pb.GetCategoryRequest
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, status.Errorf(codes.NotFound, "category with id %s not found", req.CategoryId.Value)
+			return nil, status.Errorf(
+				codes.NotFound,
+				"category with id %s not found",
+				req.CategoryId.Value,
+			)
 		}
-		return nil, status.Errorf(codes.Internal, "could not get category: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not get category: %v",
+			err.Error(),
+		)
 	}
 	category.CategoryId = &pb.UUID{Value: categoryId}
 	return &pb.GetCategoryResponse{Category: &category}, nil
 }
 
-func (c *CmsService) UpdateCategory(ctx context.Context, req *pb.UpdateCategoryRequest) (*pb.UpdateCategoryResponse, error) {
+func (c *CmsService) UpdateCategory(
+	ctx context.Context,
+	req *pb.UpdateCategoryRequest,
+) (*pb.UpdateCategoryResponse, error) {
 	stmt := `UPDATE categories name=$1, slug=$2, description=$3 WHERE id=$4`
 	_, err := c.db.Exec(
 		stmt,
@@ -198,29 +257,47 @@ func (c *CmsService) UpdateCategory(ctx context.Context, req *pb.UpdateCategoryR
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "category does not exist")
 		}
-		return nil, status.Errorf(codes.Internal, "could not update category: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not update category: %v",
+			err.Error(),
+		)
 	}
 	return nil, nil
 }
 
-func (c *CmsService) DeleteCategory(ctx context.Context, req *pb.DeleteCategoryRequest) (*pb.DeleteCategoryResponse, error) {
+func (c *CmsService) DeleteCategory(
+	ctx context.Context,
+	req *pb.DeleteCategoryRequest,
+) (*pb.DeleteCategoryResponse, error) {
 	stmt := `DELETE FROM categories WHERE id=$1`
 	_, err := c.db.Exec(stmt, req.CategoryId.Value)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "category does not exist")
 		}
-		return nil, status.Errorf(codes.Internal, "could not delete category: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not delete category: %v",
+			err.Error(),
+		)
 	}
 	return &pb.DeleteCategoryResponse{CategoryId: req.CategoryId}, nil
 }
 
-func (c *CmsService) ListCategories(ctx context.Context, req *pb.ListCategoriesRequest) (*pb.ListCategoriesResponse, error) {
+func (c *CmsService) ListCategories(
+	ctx context.Context,
+	req *pb.ListCategoriesRequest,
+) (*pb.ListCategoriesResponse, error) {
 	stmt := `SELECT id, name, slug, description FROM categories LIMIT $1 OFFSET $2`
 
 	rows, err := c.db.Query(stmt, req.PerPage, req.Page)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could not fetch categories: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not fetch categories: %v",
+			err.Error(),
+		)
 	}
 
 	var categories []*pb.Category
@@ -234,13 +311,20 @@ func (c *CmsService) ListCategories(ctx context.Context, req *pb.ListCategoriesR
 	return &pb.ListCategoriesResponse{Categories: categories}, nil
 }
 
-func (c *CmsService) GetCategoryPosts(ctx context.Context, req *pb.GetCategoryPostsRequest) (*pb.GetCategoryPostsResponse, error) {
+func (c *CmsService) GetCategoryPosts(
+	ctx context.Context,
+	req *pb.GetCategoryPostsRequest,
+) (*pb.GetCategoryPostsResponse, error) {
 	stmt := `SELECT id, published_date, updated_date, cover_image, title, description,
   slug, content, status, author_id, category_id FROM content WHERE category_id=$1 LIMIT $2 OFFSET $3 `
 
 	rows, err := c.db.Query(stmt, req.CategoryId.Value, req.PerPage, req.Page)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "query not successful: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"query not successful: %v",
+			err.Error(),
+		)
 	}
 
 	var posts []*pb.Post
@@ -255,20 +339,36 @@ func (c *CmsService) GetCategoryPosts(ctx context.Context, req *pb.GetCategoryPo
 	return &pb.GetCategoryPostsResponse{Posts: posts}, nil
 }
 
-func (c *CmsService) CreateAuthor(ctx context.Context, req *pb.CreateAuthorRequest) (*pb.CreateAuthorResponse, error) {
+func (c *CmsService) CreateAuthor(
+	ctx context.Context,
+	req *pb.CreateAuthorRequest,
+) (*pb.CreateAuthorResponse, error) {
 	stmt := `INSERT INTO authors (bio, avatar, url, user_id) VALUES ($1, $2, $3, $4) RETURNING id`
 	author := req.Author
-	row := c.db.QueryRow(stmt, author.Bio, author.Avatar, author.Url, author.UserId.Value)
+	row := c.db.QueryRow(
+		stmt,
+		author.Bio,
+		author.Avatar,
+		author.Url,
+		author.UserId.Value,
+	)
 	var authorId string
 	err := row.Scan(&authorId)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could not create author: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not create author: %v",
+			err.Error(),
+		)
 	}
 
 	return &pb.CreateAuthorResponse{AuthorId: &pb.UUID{Value: authorId}}, nil
 }
 
-func (c *CmsService) GetAuthor(ctx context.Context, req *pb.GetAuthorRequest) (*pb.GetAuthorResponse, error) {
+func (c *CmsService) GetAuthor(
+	ctx context.Context,
+	req *pb.GetAuthorRequest,
+) (*pb.GetAuthorResponse, error) {
 	stmt := `SELECT id, bio, avatar, url, user_id FROM authors WHERE id=$1`
 	var author pb.Author
 	var authorId, userId string
@@ -282,28 +382,52 @@ func (c *CmsService) GetAuthor(ctx context.Context, req *pb.GetAuthorRequest) (*
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, status.Errorf(codes.NotFound, "could not find author with id %s", req.AuthorId.Value)
+			return nil, status.Errorf(
+				codes.NotFound,
+				"could not find author with id %s",
+				req.AuthorId.Value,
+			)
 		}
-		return nil, status.Errorf(codes.Internal, "could not get author: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not get author: %v",
+			err.Error(),
+		)
 	}
 	author.AuthorId = &pb.UUID{Value: authorId}
 	author.UserId = &pb.UUID{Value: userId}
 	return &pb.GetAuthorResponse{Author: &author}, nil
 }
 
-func (c *CmsService) UpdateAuthor(ctx context.Context, req *pb.UpdateAuthorRequest) (*pb.UpdateAuthorResponse, error) {
+func (c *CmsService) UpdateAuthor(
+	ctx context.Context,
+	req *pb.UpdateAuthorRequest,
+) (*pb.UpdateAuthorResponse, error) {
 	stmt := `UPDATE authors SET bio=$1, avatar=$2, url=$3 WHERE id=$4`
-	_, err := c.db.Exec(stmt, req.Author.Bio, req.Author.Avatar, req.Author.Url, req.AuthorId.Value)
+	_, err := c.db.Exec(
+		stmt,
+		req.Author.Bio,
+		req.Author.Avatar,
+		req.Author.Url,
+		req.AuthorId.Value,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "author does not exist")
 		}
-		return nil, status.Errorf(codes.Internal, "could not update author: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not update author: %v",
+			err.Error(),
+		)
 	}
 	return &pb.UpdateAuthorResponse{AuthorId: req.AuthorId}, nil
 }
 
-func (c *CmsService) DeleteAuthor(ctx context.Context, req *pb.DeleteAuthorRequest) (*pb.DeleteAuthorResponse, error) {
+func (c *CmsService) DeleteAuthor(
+	ctx context.Context,
+	req *pb.DeleteAuthorRequest,
+) (*pb.DeleteAuthorResponse, error) {
 	stmt := `DELETE FROM authors WHERE id=$1`
 
 	_, err := c.db.Exec(stmt, req.AuthorId.Value)
@@ -311,16 +435,27 @@ func (c *CmsService) DeleteAuthor(ctx context.Context, req *pb.DeleteAuthorReque
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "author does not exist")
 		}
-		return nil, status.Errorf(codes.Internal, "could not delete author: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not delete author: %v",
+			err,
+		)
 	}
 	return &pb.DeleteAuthorResponse{AuthorId: req.AuthorId}, nil
 }
 
-func (c *CmsService) ListAuthors(ctx context.Context, req *pb.ListAuthorsRequest) (*pb.ListAuthorsResponse, error) {
+func (c *CmsService) ListAuthors(
+	ctx context.Context,
+	req *pb.ListAuthorsRequest,
+) (*pb.ListAuthorsResponse, error) {
 	stmt := `SELECT id, bio, avatar, url, user_id FROM authors LIMIT $1 OFFSET $2`
 	rows, err := c.db.Query(stmt, req.PerPage, req.Page)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could get authors: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"could get authors: %v",
+			err.Error(),
+		)
 	}
 
 	var authors []*pb.Author
@@ -335,7 +470,11 @@ func (c *CmsService) ListAuthors(ctx context.Context, req *pb.ListAuthorsRequest
 			&userId,
 		)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "could not get author: %v", err.Error())
+			return nil, status.Errorf(
+				codes.Internal,
+				"could not get author: %v",
+				err.Error(),
+			)
 		}
 		author.AuthorId = &pb.UUID{Value: authorId}
 		author.UserId = &pb.UUID{Value: userId}
@@ -345,13 +484,20 @@ func (c *CmsService) ListAuthors(ctx context.Context, req *pb.ListAuthorsRequest
 	return &pb.ListAuthorsResponse{Authors: authors}, nil
 }
 
-func (c *CmsService) GetAuthorPosts(ctx context.Context, req *pb.GetAuthorPostsRequest) (*pb.GetAuthorPostsResponse, error) {
+func (c *CmsService) GetAuthorPosts(
+	ctx context.Context,
+	req *pb.GetAuthorPostsRequest,
+) (*pb.GetAuthorPostsResponse, error) {
 	stmt := `SELECT id, published_date, updated_date, cover_image, title, description,
   slug, content, status, author_id, category_id FROM content WHERE author_id=$1 LIMIT $2 OFFSET $3 `
 
 	rows, err := c.db.Query(stmt, req.AuthorId.Value, req.PerPage, req.Page)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "query not successful: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"query not successful: %v",
+			err.Error(),
+		)
 	}
 
 	var posts []*pb.Post
@@ -366,13 +512,26 @@ func (c *CmsService) GetAuthorPosts(ctx context.Context, req *pb.GetAuthorPostsR
 	return &pb.GetAuthorPostsResponse{Posts: posts}, nil
 }
 
-func (c *CmsService) GetAuthorCategoryPosts(ctx context.Context, req *pb.GetAuthorCategoryPostsRequest) (*pb.GetAuthorCategoryPostsResponse, error) {
+func (c *CmsService) GetAuthorCategoryPosts(
+	ctx context.Context,
+	req *pb.GetAuthorCategoryPostsRequest,
+) (*pb.GetAuthorCategoryPostsResponse, error) {
 	stmt := `SELECT id, published_date, updated_date, cover_image, title, description, url,
   slug, content, status, author_id, category_id FROM content WHERE category_id=$1 AND author_id=$2 LIMIT $3 OFFSET $4 `
 
-	rows, err := c.db.Query(stmt, req.CategoryId.Value, req.AuthorId.Value, req.PerPage, req.Page)
+	rows, err := c.db.Query(
+		stmt,
+		req.CategoryId.Value,
+		req.AuthorId.Value,
+		req.PerPage,
+		req.Page,
+	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "query not successful: %v", err.Error())
+		return nil, status.Errorf(
+			codes.Internal,
+			"query not successful: %v",
+			err.Error(),
+		)
 	}
 
 	var posts []*pb.Post
@@ -404,7 +563,11 @@ func PostRowScanner(rows *sql.Rows) (*pb.Post, error) {
 		&categoryId,
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could not scan post: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not scan post: %v",
+			err,
+		)
 	}
 
 	post.PostId = &pb.UUID{Value: postId}
@@ -424,7 +587,11 @@ func CategoryRowScanner(rows *sql.Rows) (*pb.Category, error) {
 		&category.Description,
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "could not scan category: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not scan category: %v",
+			err,
+		)
 	}
 	category.CategoryId = &pb.UUID{Value: categoryId}
 	return &category, nil

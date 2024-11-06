@@ -14,15 +14,24 @@ import (
 func Config() (*aws.Config, error) {
 	godotenv.Load()
 
-	customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		return aws.Endpoint{
-			URL: "https://fra1.digitaloceanspaces.com",
-		}, nil
-	})
+	customResolver := aws.EndpointResolverWithOptionsFunc(
+		func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			return aws.Endpoint{
+				URL: "https://fra1.digitaloceanspaces.com",
+			}, nil
+		},
+	)
 
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
+	cfg, err := config.LoadDefaultConfig(
+		context.TODO(),
 		config.WithRegion("fra1"),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(os.Getenv("DO_KEY"), os.Getenv("DO_SECRET"), "")),
+		config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(
+				os.Getenv("DO_KEY"),
+				os.Getenv("DO_SECRET"),
+				"",
+			),
+		),
 		config.WithEndpointResolverWithOptions(customResolver),
 	)
 	if err != nil {

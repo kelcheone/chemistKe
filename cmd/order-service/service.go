@@ -21,13 +21,21 @@ func NewOrderService(db database.DB) *OrderService {
 	return &OrderService{db: db}
 }
 
-func (s *OrderService) OrderProduct(ctx context.Context, req *pb.OrderProductRequest) (*pb.OrderProductResponse, error) {
+func (s *OrderService) OrderProduct(
+	ctx context.Context,
+	req *pb.OrderProductRequest,
+) (*pb.OrderProductResponse, error) {
 	stmt := `INSERT INTO orders (user_id, product_id, quantity, total) VALUES ($1, $2, $3, $4) RETURNING id`
 
 	var orderId string
-	err := s.db.QueryRow(stmt, req.UserId.Value, req.ProductId.Value, req.Quantity, req.Total).Scan(&orderId)
+	err := s.db.QueryRow(stmt, req.UserId.Value, req.ProductId.Value, req.Quantity, req.Total).
+		Scan(&orderId)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to insert order: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to insert order: %v",
+			err,
+		)
 	}
 	order := &pb.Order{
 		Id:        &pb.UUID{Value: orderId},
@@ -43,11 +51,18 @@ func (s *OrderService) OrderProduct(ctx context.Context, req *pb.OrderProductReq
 	}, nil
 }
 
-func (s *OrderService) GetUserOrders(ctx context.Context, req *pb.GetUserOrdersRequest) (*pb.GetUserOrdersResponse, error) {
+func (s *OrderService) GetUserOrders(
+	ctx context.Context,
+	req *pb.GetUserOrdersRequest,
+) (*pb.GetUserOrdersResponse, error) {
 	stmt := `SELECT id, user_id, product_id, status, quantity, total, created_at, updated_at FROM orders WHERE user_id=$1 LIMIT $2 OFFSET $3`
 	rows, err := s.db.Query(stmt, req.UserId.Value, req.Limit, req.Page)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to query orders: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to query orders: %v",
+			err,
+		)
 	}
 	defer rows.Close()
 
@@ -67,7 +82,11 @@ func (s *OrderService) GetUserOrders(ctx context.Context, req *pb.GetUserOrdersR
 			&order.UpdatedAt,
 		)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to scan order row: %v", err)
+			return nil, status.Errorf(
+				codes.Internal,
+				"failed to scan order row: %v",
+				err,
+			)
 		}
 		order.Id = &pb.UUID{Value: orderId}
 		order.ProductId = &pb.UUID{Value: productId}
@@ -77,7 +96,11 @@ func (s *OrderService) GetUserOrders(ctx context.Context, req *pb.GetUserOrdersR
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, status.Errorf(codes.Internal, "error iterating over rows: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"error iterating over rows: %v",
+			err,
+		)
 	}
 
 	return &pb.GetUserOrdersResponse{
@@ -86,7 +109,10 @@ func (s *OrderService) GetUserOrders(ctx context.Context, req *pb.GetUserOrdersR
 	}, nil
 }
 
-func (s *OrderService) GetOrder(ctx context.Context, req *pb.GetOrderRequest) (*pb.GetOrderResponse, error) {
+func (s *OrderService) GetOrder(
+	ctx context.Context,
+	req *pb.GetOrderRequest,
+) (*pb.GetOrderResponse, error) {
 	stmt := `SELECT id, user_id, product_id, status, quantity, total, created_at, updated_at FROM orders WHERE id=$1`
 	fmt.Println(stmt)
 
@@ -106,9 +132,17 @@ func (s *OrderService) GetOrder(ctx context.Context, req *pb.GetOrderRequest) (*
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, status.Errorf(codes.NotFound, "order with ID %s not found", req.OrderId.Value)
+			return nil, status.Errorf(
+				codes.NotFound,
+				"order with ID %s not found",
+				req.OrderId.Value,
+			)
 		}
-		return nil, status.Errorf(codes.Internal, "failed to get order: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to get order: %v",
+			err,
+		)
 	}
 
 	order.Id = &pb.UUID{Value: id}
@@ -120,11 +154,18 @@ func (s *OrderService) GetOrder(ctx context.Context, req *pb.GetOrderRequest) (*
 	return &pb.GetOrderResponse{Order: &order, Message: "query successful"}, nil
 }
 
-func (s *OrderService) GetOrders(ctx context.Context, req *pb.GetOrdersRequest) (*pb.GetOrdersResponse, error) {
+func (s *OrderService) GetOrders(
+	ctx context.Context,
+	req *pb.GetOrdersRequest,
+) (*pb.GetOrdersResponse, error) {
 	stmt := `SELECT id, user_id, product_id, status, quantity, total, created_at, updated_at FROM orders LIMIT $1 OFFSET $2`
 	rows, err := s.db.Query(stmt, req.Limit, req.Page)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to query orders: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to query orders: %v",
+			err,
+		)
 	}
 	defer rows.Close()
 
@@ -144,7 +185,11 @@ func (s *OrderService) GetOrders(ctx context.Context, req *pb.GetOrdersRequest) 
 			&order.UpdatedAt,
 		)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to scan order row: %v", err)
+			return nil, status.Errorf(
+				codes.Internal,
+				"failed to scan order row: %v",
+				err,
+			)
 		}
 		order.Id = &pb.UUID{Value: orderId}
 		order.ProductId = &pb.UUID{Value: productId}
@@ -154,7 +199,11 @@ func (s *OrderService) GetOrders(ctx context.Context, req *pb.GetOrdersRequest) 
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, status.Errorf(codes.Internal, "error iterating over rows: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"error iterating over rows: %v",
+			err,
+		)
 	}
 
 	return &pb.GetOrdersResponse{
@@ -163,28 +212,40 @@ func (s *OrderService) GetOrders(ctx context.Context, req *pb.GetOrdersRequest) 
 	}, nil
 }
 
-func (s *OrderService) UpdateOrder(ctx context.Context, req *pb.UpdateOrderRequest) (*pb.UpdateOrderResponse, error) {
+func (s *OrderService) UpdateOrder(
+	ctx context.Context,
+	req *pb.UpdateOrderRequest,
+) (*pb.UpdateOrderResponse, error) {
 	stmt := `UPDATE orders SET status=$1, quantity=$2, total=$3 WHERE id=$4 RETURNING *`
 	var order pb.Order
 	var userId, productId, orderId string
 	fmt.Println(stmt)
 	fmt.Printf("%+v\n", req.Status)
 
-	err := s.db.QueryRow(stmt, req.Status, req.Quantity, req.Total, req.OrderId.Value).Scan(
-		&orderId,
-		&userId,
-		&productId,
-		&order.Status,
-		&order.Quantity,
-		&order.Total,
-		&order.CreatedAt,
-		&order.UpdatedAt,
-	)
+	err := s.db.QueryRow(stmt, req.Status, req.Quantity, req.Total, req.OrderId.Value).
+		Scan(
+			&orderId,
+			&userId,
+			&productId,
+			&order.Status,
+			&order.Quantity,
+			&order.Total,
+			&order.CreatedAt,
+			&order.UpdatedAt,
+		)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, status.Errorf(codes.NotFound, "order with ID %s not found", req.OrderId.Value)
+			return nil, status.Errorf(
+				codes.NotFound,
+				"order with ID %s not found",
+				req.OrderId.Value,
+			)
 		}
-		return nil, status.Errorf(codes.Internal, "failed to update order: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to update order: %v",
+			err,
+		)
 	}
 
 	order.Id = &pb.UUID{Value: orderId}
@@ -197,20 +258,35 @@ func (s *OrderService) UpdateOrder(ctx context.Context, req *pb.UpdateOrderReque
 	}, nil
 }
 
-func (s *OrderService) DeleteOrder(ctx context.Context, req *pb.DeleteOrderRequest) (*pb.DeleteOrderResponse, error) {
+func (s *OrderService) DeleteOrder(
+	ctx context.Context,
+	req *pb.DeleteOrderRequest,
+) (*pb.DeleteOrderResponse, error) {
 	stmt := `DELETE FROM orders WHERE id=$1`
 	result, err := s.db.Exec(stmt, req.OrderId.Value)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to delete order: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to delete order: %v",
+			err,
+		)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get rows affected: %v", err)
+		return nil, status.Errorf(
+			codes.Internal,
+			"failed to get rows affected: %v",
+			err,
+		)
 	}
 
 	if rowsAffected == 0 {
-		return nil, status.Errorf(codes.NotFound, "order with ID %s not found", req.OrderId.Value)
+		return nil, status.Errorf(
+			codes.NotFound,
+			"order with ID %s not found",
+			req.OrderId.Value,
+		)
 	}
 
 	return &pb.DeleteOrderResponse{

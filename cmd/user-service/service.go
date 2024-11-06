@@ -20,7 +20,10 @@ func NewService(db database.DB) *UserService {
 	return &UserService{db: db}
 }
 
-func (s *UserService) AddUser(ctx context.Context, req *pb.AddUserRequest) (*pb.AddUserResponse, error) {
+func (s *UserService) AddUser(
+	ctx context.Context,
+	req *pb.AddUserRequest,
+) (*pb.AddUserResponse, error) {
 	user := req.User
 	stmt := `INSERT INTO users (name, email, phone, role, password) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 	type result struct {
@@ -32,7 +35,14 @@ func (s *UserService) AddUser(ctx context.Context, req *pb.AddUserRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	res := s.db.QueryRow(stmt, user.Name, user.Email, user.Phone, user.Role, hashedPassword)
+	res := s.db.QueryRow(
+		stmt,
+		user.Name,
+		user.Email,
+		user.Phone,
+		user.Role,
+		hashedPassword,
+	)
 
 	var r result
 	if err := res.Scan(&r.id); err != nil {
@@ -49,15 +59,25 @@ func (s *UserService) AddUser(ctx context.Context, req *pb.AddUserRequest) (*pb.
 	return response, nil
 }
 
-func (s *UserService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	stmt := `SELECT id, name, email, phone, role FROM users WHERE id=$1`
+func (s *UserService) GetUser(
+	ctx context.Context,
+	req *pb.GetUserRequest,
+) (*pb.GetUserResponse, error) {
+	stmt := `SELECT id, name, email, phone, role, password FROM users WHERE id=$1`
 	row := s.db.QueryRow(stmt, req.Id.Value)
 
 	var gUser pb.User
 
 	var userId string
 
-	err := row.Scan(&userId, &gUser.Name, &gUser.Email, &gUser.Phone, &gUser.Role)
+	err := row.Scan(
+		&userId,
+		&gUser.Name,
+		&gUser.Email,
+		&gUser.Phone,
+		&gUser.Role,
+		&gUser.Password,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "user not found")
@@ -69,7 +89,10 @@ func (s *UserService) GetUser(ctx context.Context, req *pb.GetUserRequest) (*pb.
 	return &pb.GetUserResponse{User: &gUser}, nil
 }
 
-func (s *UserService) GetUserByEmail(ctx context.Context, req *pb.GetUserByEmailRequest) (*pb.GetUserByEmailResponse, error) {
+func (s *UserService) GetUserByEmail(
+	ctx context.Context,
+	req *pb.GetUserByEmailRequest,
+) (*pb.GetUserByEmailResponse, error) {
 	stmt := `SELECT id, name, email, phone, role FROM users WHERE email=$1`
 	row := s.db.QueryRow(stmt, req.Email)
 
@@ -77,22 +100,50 @@ func (s *UserService) GetUserByEmail(ctx context.Context, req *pb.GetUserByEmail
 
 	var userId string
 
-	err := row.Scan(&userId, &gUser.Name, &gUser.Email, &gUser.Phone, gUser.Role)
+	err := row.Scan(
+		&userId,
+		&gUser.Name,
+		&gUser.Email,
+		&gUser.Phone,
+		&gUser.Role,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, status.Errorf(codes.NotFound, "use with email %s not found", req.Email)
+			return nil, status.Errorf(
+				codes.NotFound,
+				"use with email %s not found",
+				req.Email,
+			)
 		}
-		return nil, status.Errorf(codes.Internal, "error fetching user with email %s", req.Email)
+		return nil, status.Errorf(
+			codes.Internal,
+			"error fetching user with email %s",
+			req.Email,
+		)
 	}
 	gUser.Id = &pb.UUID{Value: userId}
 
 	return &pb.GetUserByEmailResponse{User: &gUser}, nil
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest) (*pb.UpdateUserResponse, error) {
+func (s *UserService) UpdateUser(
+	ctx context.Context,
+	req *pb.UpdateUserRequest,
+) (*pb.UpdateUserResponse, error) {
 	stmt := `UPDATE users SET name=$1, email=$2, phone=$3, role=$4 WHERE id=$5`
 	tUser := req.User
-	_, err := s.db.Exec(stmt, tUser.Name, tUser.Email, tUser.Phone, tUser.Role, tUser.Id.Value)
+
+	if tUser.Id.Value == "" {
+		return nil, status.Errorf(codes.Aborted, "Id was not provided")
+	}
+	_, err := s.db.Exec(
+		stmt,
+		tUser.Name,
+		tUser.Email,
+		tUser.Phone,
+		tUser.Role,
+		tUser.Id.Value,
+	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(codes.NotFound, "user not found")
@@ -104,7 +155,10 @@ func (s *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest)
 	}, nil
 }
 
-func (s *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest) (*pb.DeleteUserResponse, error) {
+func (s *UserService) DeleteUser(
+	ctx context.Context,
+	req *pb.DeleteUserRequest,
+) (*pb.DeleteUserResponse, error) {
 	stmt := `DELETE FROM users WHERE id=$1`
 	_, err := s.db.Exec(stmt, req.Id.Value)
 	if err != nil {
@@ -118,7 +172,10 @@ func (s *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest)
 	}, nil
 }
 
-func (s *UserService) GetUsers(ctx context.Context, req *pb.GetUsersRequest) (*pb.GetUsersResponse, error) {
+func (s *UserService) GetUsers(
+	ctx context.Context,
+	req *pb.GetUsersRequest,
+) (*pb.GetUsersResponse, error) {
 	limit := req.Limit
 	page := req.Page
 	stmt := `SELECT id,name, email, phone, role FROM users LIMIT $1 OFFSET $2`
@@ -133,7 +190,13 @@ func (s *UserService) GetUsers(ctx context.Context, req *pb.GetUsersRequest) (*p
 	for rows.Next() {
 		var user pb.User
 		var userId string
-		err := rows.Scan(&userId, &user.Name, &user.Email, &user.Phone, &user.Role)
+		err := rows.Scan(
+			&userId,
+			&user.Name,
+			&user.Email,
+			&user.Phone,
+			&user.Role,
+		)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "error scanning user")
 		}
