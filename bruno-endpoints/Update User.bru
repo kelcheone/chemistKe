@@ -1,0 +1,27 @@
+meta {
+  name: Update User
+  type: http
+  seq: 7
+}
+
+patch {
+  url: http://localhost:9090/api/v1/users
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2UsImV4cCI6MTczMTUxNzAyNSwiaWQiOiIxYmY0NDdiOC1hMTI5LTQyYTItYjExZS02ODRhODAxNTY4ZmYiLCJuYW1lIjoiS2V2aW4gS2VsY2hlIn0.qgTva7Lt2DIYOaFcGE5k3eZyG7ZtXu5ZwkbpousZgbY
+}
+
+body:json {
+  {
+  "id":"3043d07d-7b76-419f-9df9-c7f830f11033",
+  "name": "Felix Meliop",
+  "email": "kelcheone@gmail.com",
+  "phone":"0782190134",
+  "passowrd": "12345",
+  "role": "user"
+  }
+  
+}

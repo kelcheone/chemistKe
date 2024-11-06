@@ -1,0 +1,21 @@
+meta {
+  name: Delete User
+  type: http
+  seq: 8
+}
+
+delete {
+  url: http://localhost:9090/api/v1/users
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2UsImV4cCI6MTczMTUyMjQ5NSwiaWQiOiIzMDQzZDA3ZC03Yjc2LTQxOWYtOWRmOS1jN2Y4MzBmMTEwMzMiLCJuYW1lIjoiRmVsaXggTWVsaW9wIn0.wOHAsSnKtqiYAO0cwsBJQDG4-nQ3GPA1LBBeecek1B4
+}
+
+body:json {
+  {
+  "id":"3043d07d-7b76-419f-9df9-c7f830f11033"
+  }
+}

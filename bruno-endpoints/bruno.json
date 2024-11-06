@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "ChemistKe",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

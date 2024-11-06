@@ -1,0 +1,21 @@
+meta {
+  name: Login user
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://localhost:9090/api/v1/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+  "id":"3043d07d-7b76-419f-9df9-c7f830f11033",
+  "name":"Felix Meliop",
+  "email": "kelcheone@gmail.com",
+  "passowrd": "12345"
+  }
+  
+}

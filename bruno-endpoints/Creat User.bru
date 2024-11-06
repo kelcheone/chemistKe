@@ -1,0 +1,22 @@
+meta {
+  name: Creat User
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:9090/api/v1/users
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+  "name": "Felix Meli",
+  "email": "kelcheone@gmail.com",
+  "phone":"0782190134",
+  "passowrd": "12345",
+  "role": "user"
+  }
+  
+}

@@ -1,0 +1,15 @@
+meta {
+  name: Visit Resticted
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://localhost:9090/api/v1/users/test
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2UsImV4cCI6MTczMTA5NjUzNCwibmFtZSI6ImtldmluIn0.NB8jLoH9N8pH1EMCESjeXY3R3bHV-16Bj1L8DHObBFY
+}
