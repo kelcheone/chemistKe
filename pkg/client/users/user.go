@@ -3,6 +3,7 @@ package userClient
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -13,7 +14,10 @@ import (
 )
 
 func Init() error {
-	conn, err := grpc.NewClient("localhost:8090", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(
+		"localhost:8090",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	// fmt.Printf("%+v\n", conn)
 	if err != nil {
 		return err
@@ -96,24 +100,48 @@ func Init() error {
 		fmt.Printf("%d-> %+v\n", i, user)
 	}
 
+	for range 20 {
+		user := &user_proto.AddUserRequest{
+			User: &user_proto.User{
+				Name:     gofakeit.Name(),
+				Email:    gofakeit.Email(),
+				Phone:    gofakeit.Phone(),
+				Password: gofakeit.Password(true, true, true, true, false, 12),
+				Role:     user_proto.UserRoles_ADMIN,
+			},
+		}
+
+		_, err := c.AddUser(context.TODO(), user)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+	}
+
 	return nil
 }
 
-func CreateUser(ctx context.Context, c user_proto.UserServiceClient) (string, error) {
-	user := &user_proto.AddUserRequest{
-		User: &user_proto.User{
-			Name:     gofakeit.Name(),
-			Email:    gofakeit.Email(),
-			Phone:    gofakeit.Phone(),
-			Password: gofakeit.Password(true, true, true, true, false, 12),
-			Role:     user_proto.UserRoles_ADMIN,
-		},
-	}
+func CreateUsers(
+	ctx context.Context,
+	c user_proto.UserServiceClient,
+) {
+	for range 20 {
+		user := &user_proto.AddUserRequest{
+			User: &user_proto.User{
+				Name:     gofakeit.Name(),
+				Email:    gofakeit.Email(),
+				Phone:    gofakeit.Phone(),
+				Password: gofakeit.Password(true, true, true, true, false, 12),
+				Role:     user_proto.UserRoles_ADMIN,
+			},
+		}
 
-	res, err := c.AddUser(ctx, user)
-	if err != nil {
-		return "", err
-	}
+		_, err := c.AddUser(ctx, user)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	return res.Id.Value, nil
+	}
 }
+
+// ------------------Add 20 Users
