@@ -18,7 +18,10 @@ import (
 )
 
 func Init() error {
-	conn, err := grpc.NewClient("localhost:8090", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(
+		"localhost:8090",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	// fmt.Printf("%+v\n", conn)
 	if err != nil {
 		return err
@@ -49,7 +52,12 @@ func Init() error {
 	fmt.Printf("%+v\n", createRes)
 
 	// ------------- GET PRODUCT -------------
-	getRes, err := c.GetProduct(ctx, &product_proto.GetProductRequest{Id: &product_proto.UUID{Value: createRes}})
+	getRes, err := c.GetProduct(
+		ctx,
+		&product_proto.GetProductRequest{
+			Id: &product_proto.UUID{Value: createRes},
+		},
+	)
 	if err != nil {
 		log.Fatalf("Could not get product %v\n", err)
 	}
@@ -66,7 +74,10 @@ func Init() error {
 	product.Price = float32(gofakeit.Product().Price)
 	product.Quantity = int32(gofakeit.Number(0, 100))
 
-	updateRes, err := c.UpdateProduct(ctx, &product_proto.UpdateProductRequest{Product: product})
+	updateRes, err := c.UpdateProduct(
+		ctx,
+		&product_proto.UpdateProductRequest{Product: product},
+	)
 	if err != nil {
 		log.Fatalf("Could not update product %v\n", err)
 	}
@@ -87,7 +98,13 @@ func Init() error {
 		fmt.Printf("%d------> %s, \t kes%.2f\n", i, p.Name, p.Price)
 	}
 
-	url, err := c.GetUploadURL(ctx, &product_proto.GetUploadURLRequest{Id: &product_proto.UUID{Value: createRes}, FileName: "image1.png"})
+	url, err := c.GetUploadURL(
+		ctx,
+		&product_proto.GetUploadURLRequest{
+			Id:       &product_proto.UUID{Value: createRes},
+			FileName: "image1.png",
+		},
+	)
 	fmt.Printf("%+v\n", url)
 
 	imagePath := "./public/images/image1.png"
@@ -96,7 +113,12 @@ func Init() error {
 		return err
 	}
 	sT := time.Now()
-	images, err := c.GetProductImages(ctx, &product_proto.GetProductImagesRequest{ProductId: &product_proto.UUID{Value: createRes}})
+	images, err := c.GetProductImages(
+		ctx,
+		&product_proto.GetProductImagesRequest{
+			ProductId: &product_proto.UUID{Value: createRes},
+		},
+	)
 	if err != nil {
 		log.Fatalf("Could not get images: %v\n", err)
 	}
@@ -105,6 +127,10 @@ func Init() error {
 		fmt.Printf("%d ----------> %s\n", i, image)
 	}
 	fmt.Println(time.Since(sT))
+
+	// for range 20 {
+	// 	_ = CreateProduct(ctx, c)
+	// }
 
 	return nil
 }
@@ -122,7 +148,7 @@ func uploadFile(filePath string, url string) error {
 	}
 	request.Header.Set("Content-Type", "multipart/form-data")
 	// 'x-amz-acl': 'public-read' -- This header is required for public read ACL for Digital ocean
-	request.Header.Set("x-amz-acl", "public-read")
+	request.Header.Set("x-amz-acl", "bucket-owner-full-control")
 	client := &http.Client{}
 	resp, err := client.Do(request)
 
@@ -135,7 +161,10 @@ func uploadFile(filePath string, url string) error {
 	return err
 }
 
-func CreateProduct(ctx context.Context, c product_proto.ProductServiceClient) string {
+func CreateProduct(
+	ctx context.Context,
+	c product_proto.ProductServiceClient,
+) string {
 	product := &product_proto.Product{
 		Name:        gofakeit.Product().Name,
 		Description: gofakeit.Product().Description,
@@ -146,7 +175,10 @@ func CreateProduct(ctx context.Context, c product_proto.ProductServiceClient) st
 		Quantity:    int32(gofakeit.Number(0, 100)),
 	}
 
-	createRes, err := c.CreateProduct(ctx, &product_proto.CreateProductRequest{Product: product})
+	createRes, err := c.CreateProduct(
+		ctx,
+		&product_proto.CreateProductRequest{Product: product},
+	)
 	if err != nil {
 		log.Fatalf("Could not create product %v\n", err)
 	}
@@ -154,7 +186,11 @@ func CreateProduct(ctx context.Context, c product_proto.ProductServiceClient) st
 	return createRes.Id.Value
 }
 
-func GetProduct(ctx context.Context, c product_proto.ProductServiceClient, id string) (*product_proto.Product, error) {
+func GetProduct(
+	ctx context.Context,
+	c product_proto.ProductServiceClient,
+	id string,
+) (*product_proto.Product, error) {
 	getRes, err := c.GetProduct(
 		ctx,
 		&product_proto.GetProductRequest{
