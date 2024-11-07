@@ -65,7 +65,11 @@ func (u *User) Login(c echo.Context) error {
 		)
 	}
 
-	tokenString, err := utils.CreateToken(user.Id, user.Name, false)
+	tokenString, err := utils.CreateToken(
+		user.Id,
+		user.Name,
+		gUserResp.User.Role.String(),
+	)
 	if err != nil {
 		return c.JSON(
 			http.StatusInternalServerError,

@@ -25,11 +25,17 @@ type jwtCustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-func CreateToken(id string, name string, admin bool) (string, error) {
+func CreateToken(id string, name string, role string) (string, error) {
+	var admin bool
+	if role == "USER" {
+		admin = false
+	} else {
+		admin = true
+	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    id,
 		"name":  name,
-		"admin": false,
+		"admin": admin,
 		"exp":   time.Now().Add(time.Hour * 168).Unix(),
 	})
 	tokenString, err := token.SignedString(secretKey)
