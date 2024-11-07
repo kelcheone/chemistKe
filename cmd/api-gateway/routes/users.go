@@ -1,4 +1,4 @@
-package userRoute
+package routes
 
 import (
 	"context"
@@ -39,7 +39,7 @@ type UserServer struct {
 	UserClient user_proto.UserServiceClient
 }
 
-func ConnectServer(link string) (*UserServer, func(), error) {
+func ConnectUserServer(link string) (*UserServer, func(), error) {
 	userConn, err := grpc.NewClient(
 		link,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -79,7 +79,7 @@ func (s *UserServer) CreateUser(c echo.Context) error {
 		Phone:    user.Phone,
 		Password: user.Password,
 	}
-	if user.Role == "admin" {
+	if user.Role == "ADMIN" {
 		pbUSer.Role = user_proto.UserRoles_ADMIN
 	} else {
 		pbUSer.Role = user_proto.UserRoles_USER
@@ -177,12 +177,21 @@ func (s *UserServer) UpdateUser(c echo.Context) error {
 		)
 	}
 
+	var role user_proto.UserRoles
+
+	if user.Role == "ADMIN" {
+		role = user_proto.UserRoles_ADMIN
+	} else {
+		role = user_proto.UserRoles_USER
+	}
+
 	req := &user_proto.UpdateUserRequest{
 		User: &user_proto.User{
 			Id:    &user_proto.UUID{Value: user.Id},
 			Name:  user.Name,
 			Email: user.Email,
 			Phone: user.Phone,
+			Role:  role,
 		},
 	}
 
@@ -252,5 +261,25 @@ func (s *UserServer) GetUsers(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	var responses []GetUserResponse
+
+	for _, gUser := range resp.Users {
+		response := GetUserResponse{
+			Id:    gUser.Id.Value,
+			Name:  gUser.Name,
+			Email: gUser.Email,
+			Phone: gUser.Phone,
+			Role:  gUser.Role.String(),
+		}
+		responses = append(responses, response)
+	}
+
+	type Response struct {
+		Users []GetUserResponse `json:"users"`
+	}
+	fResp := Response{
+		Users: responses,
+	}
+
+	return c.JSON(http.StatusOK, fResp)
 }
