@@ -1,0 +1,27 @@
+meta {
+  name: Update User
+  type: http
+  seq: 5
+}
+
+patch {
+  url: http://localhost:9090/api/v1/users
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2UsImV4cCI6MTczMTU2OTUzMCwiaWQiOiJjODhhNGMwZC02ZmNiLTQ4ZmYtYWU0OC0xZmIzNTM5ZGQwMGEiLCJuYW1lIjoiRmVsaXggTWVsaW9wIn0.G0gm-mOV-A7BoTb9ze65_1uAvXUYahpGXE8wH4Tls6Y
+}
+
+body:json {
+  {
+  "id":"c88a4c0d-6fcb-48ff-ae48-1fb3539dd00a",
+  "name": "Kevin Kelche",
+  "email": "kelcheone@gmail.com",
+  "phone":"0782190134",
+  "passowrd": "12345",
+  "role": "USER"
+  }
+  
+}

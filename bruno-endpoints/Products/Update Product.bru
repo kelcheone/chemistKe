@@ -1,0 +1,28 @@
+meta {
+  name: Update Product
+  type: http
+  seq: 6
+}
+
+patch {
+  url: http://localhost:9090/api/v1/products
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiZXhwIjoxNzMxNTk5ODU1LCJpZCI6IjFiZjQ0N2I4LWExMjktNDJhMi1iMTFlLTY4NGE4MDE1NjhmZiIsIm5hbWUiOiJrZXZpbiBDaGVydWl5b3QifQ.iVc_JGFjgNNcneipbE0Bd8PPOWKJqMQ62ouuo5we-OM
+}
+
+body:json {
+  {
+    "id": "7e795efe-34b9-427b-beb1-d61d07c8a248",
+    "name": "Sharp Thermostat Nexus",
+    "description": "Where recently sing could whoever doubtfully them Nepalese simply.",
+    "category": "art supplies",
+    "sub_category": "smart home devices",
+    "brand": "Symcat",
+    "price": 1400.71,
+    "quantity": 500
+  }
+}

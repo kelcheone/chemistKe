@@ -1,0 +1,22 @@
+meta {
+  name: Get Users
+  type: http
+  seq: 7
+}
+
+get {
+  url: http://localhost:9090/api/v1/users
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6ZmFsc2UsImV4cCI6MTczMTU2OTUzMCwiaWQiOiJjODhhNGMwZC02ZmNiLTQ4ZmYtYWU0OC0xZmIzNTM5ZGQwMGEiLCJuYW1lIjoiRmVsaXggTWVsaW9wIn0.G0gm-mOV-A7BoTb9ze65_1uAvXUYahpGXE8wH4Tls6Y
+}
+
+body:json {
+  {
+    "page": 0,
+    "limit": 100
+  }
+}

@@ -1,0 +1,19 @@
+meta {
+  name: Get products by sub-category
+  type: http
+  seq: 5
+}
+
+get {
+  url: http://localhost:9090/api/v1/products/get-products-by-sub-category
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "sub-category":"smart home devices",
+    "page":0,
+    "limit": 10
+  }
+}

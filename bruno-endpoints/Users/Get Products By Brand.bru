@@ -1,0 +1,19 @@
+meta {
+  name: Get Products By Brand
+  type: http
+  seq: 9
+}
+
+get {
+  url: http://localhost:9090/api/v1/products/get-products-by-brand
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "brand":"Symcat",
+    "page":0,
+    "limit": 10
+  }
+}

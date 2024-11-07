@@ -1,0 +1,27 @@
+meta {
+  name: Create Product
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:9090/api/v1/products
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiZXhwIjoxNzMxNTcyMDYwLCJpZCI6IjFiZjQ0N2I4LWExMjktNDJhMi1iMTFlLTY4NGE4MDE1NjhmZiIsIm5hbWUiOiJrZXZpbiBDaGVydWl5b3QifQ.uX27O34jveu6Z-quSnuQr9ie2PeFJGl77_wfE2nS8LU
+}
+
+body:json {
+  {
+    "name": "Minoxidil 5%",
+    "description": "Minoxidil applied to the scalp is used to stimulate hair growth in adult men and women with a certain type of baldness.",
+    "category": "Dermocosmetics",
+    "subcategory":"Hair Treatment",
+    "brand":"KirlLand Minoxidil",
+    "Price": 1500.99,
+    "quantity": 300
+  }
+}
