@@ -4,7 +4,7 @@ import (
 	"log"
 
 	authservice "github.com/kelcheone/chemistke/cmd/api-gateway/auth"
-	userRoute "github.com/kelcheone/chemistke/cmd/api-gateway/routes/users"
+	"github.com/kelcheone/chemistke/cmd/api-gateway/routes"
 	"github.com/kelcheone/chemistke/cmd/utils"
 	user_proto "github.com/kelcheone/chemistke/pkg/grpc/user"
 	"github.com/labstack/echo/v4"
@@ -22,12 +22,21 @@ func NewServer(userClient user_proto.UserServiceClient) *Server {
 }
 
 func main() {
-	userServer, CloseUserConn, err := userRoute.ConnectServer("localhost:8090")
+	userServer, CloseUserConn, err := routes.ConnectUserServer("localhost:8090")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	defer CloseUserConn()
+
+	productsServer, CloseProductConn, err := routes.ConnectProductServer(
+		"localhost:8090",
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer CloseProductConn()
 
 	e := echo.New()
 
@@ -51,6 +60,23 @@ func main() {
 
 		return user.Login(c)
 	})
+
+	products := v1.Group("/products")
+	products.POST("", productsServer.CreateProduct, utils.AuthMiddleware)
+	products.GET("/:id", productsServer.GetProduct)
+	products.GET("", productsServer.GetProducts)
+	products.GET("/get-products-by-brand", productsServer.GetProductsByBrand)
+	products.GET(
+		"/get-products-by-category",
+		productsServer.GetProductsByCategory,
+	)
+	products.GET(
+		"/get-products-by-sub-category",
+		productsServer.GetProductsBySCategory,
+	)
+
+	products.PATCH("", productsServer.UpdateProduct, utils.AuthMiddleware)
+	products.DELETE("/:id", productsServer.DeleteProduct, utils.AuthMiddleware)
 
 	e.Logger.Fatal(e.Start(":9090"))
 }
