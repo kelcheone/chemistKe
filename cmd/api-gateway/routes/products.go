@@ -2,6 +2,7 @@ package routes
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/kelcheone/chemistke/cmd/utils"
@@ -24,6 +25,10 @@ type Product struct {
 
 type ProductServer struct {
 	ProductClient product_proto.ProductServiceClient
+}
+
+type IdReq struct {
+	Id string `json:"id"`
 }
 
 func ConnectProductServer(link string) (*ProductServer, func(), error) {
@@ -304,4 +309,74 @@ func (p *ProductServer) DeleteProduct(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusNoContent, resp)
+}
+
+func (p *ProductServer) UploadImage(c echo.Context) error {
+	productId := c.FormValue("product-id")
+	imgType := c.FormValue("image-type")
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+	if imgType == "" {
+		imgType = "general"
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrResponse{
+			Message: "could not open file",
+		})
+	}
+	defer file.Close()
+
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrResponse{
+			Message: "could not read file",
+		})
+	}
+
+	resp, err := p.ProductClient.UploadProdctImages(
+		c.Request().Context(),
+		&product_proto.UploadProdctImagesRequest{
+			ProductId: &product_proto.UUID{Value: productId},
+			ImageData: fileBytes,
+			ImageType: imgType,
+			ImageName: fileHeader.Filename,
+		},
+	)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrResponse{
+			Message: fmt.Sprintf("could not upload: %+v", err.Error()),
+		})
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+func (p *ProductServer) GetProductImages(c echo.Context) error {
+	id := c.Param("id")
+
+	if id == "" {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid id",
+		})
+	}
+
+	req := &product_proto.GetProductImagesRequest{
+		ProductId: &product_proto.UUID{Value: id},
+	}
+
+	resp, err := p.ProductClient.GetProductImages(c.Request().Context(), req)
+	if err != nil {
+		return c.JSON(
+			http.StatusInternalServerError,
+			ErrResponse{Message: err.Error()},
+		)
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
