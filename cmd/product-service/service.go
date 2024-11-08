@@ -14,17 +14,16 @@ import (
 )
 
 type ProductService struct {
-	db    database.DB
-	files *files.Files
+	db database.DB
 	pb.UnimplementedProductServiceServer
 }
 
-func NewProductService(files *files.Files, db database.DB) *ProductService {
+func NewProductService(db database.DB) *ProductService {
 	return &ProductService{
-		db:    db,
-		files: files,
+		db: db,
 	}
 }
+
 
 func (s *ProductService) CreateProduct(
 	ctx context.Context,
@@ -351,23 +350,33 @@ func (s *ProductService) GetProductsByBrand(
 	}, nil
 }
 
-// GetUploadURL expects the productId, userId and the filename and returns the required file name.
-func (s *ProductService) GetUploadURL(
+// upload product image.
+func (s *ProductService) UploadProdctImages(
 	ctx context.Context,
-	req *pb.GetUploadURLRequest,
-) (*pb.GetUploadURLResponse, error) {
-	randId := time.Now().UnixNano()
-	key := fmt.Sprintf("products/%s/%d_%s", req.Id.Value, randId, req.FileName)
-	url, err := s.files.GetPresignedURL(key)
+	req *pb.UploadProdctImagesRequest,
+) (*pb.UploadProdctImagesResponse, error) {
+	// get product Id, image  then upload it and push the url to the databse.
+	fileReader := bytes.NewReader(req.ImageData)
+
+	resp, err := files.UploadImage(
+		fileReader,
+		req.ProductId.Value,
+		req.ImageName,
+	)
+	// add to database
+
+	stmt := `INSERT INTO productimages(product_id, image_type, url) VALUES ($1, $2, $3) RETURNING id;`
+	_, err = s.db.Exec(stmt, req.ProductId.Value, req.ImageType, resp)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
-			"error getting presigned url: %v",
-			err,
+			"could not upload the image %s",
+			err.Error(),
 		)
 	}
-	return &pb.GetUploadURLResponse{
-		Url: url,
+
+	return &pb.UploadProdctImagesResponse{
+		Message: resp,
 	}, nil
 }
 
@@ -377,17 +386,44 @@ func (s *ProductService) GetProductImages(
 	ctx context.Context,
 	req *pb.GetProductImagesRequest,
 ) (*pb.GetProductImagesResponse, error) {
-	// the images are found in the bucketname/products/images
-	images, err := s.files.GetProductImages(ctx, req.ProductId.Value)
+	urls, err := s.getProductImages(req.ProductId.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetProductImagesResponse{
+		Urls: urls,
+	}, nil
+}
+
+func (s *ProductService) getProductImages(
+	productId string,
+) ([]*pb.Image, error) {
+	stmt := `SELECT url, image_type from productimages WHERE product_id=$1;`
+	rows, err := s.db.Query(stmt, productId)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
 			"error getting product images: %v",
-			err,
+			err.Error(),
 		)
 	}
 
-	return &pb.GetProductImagesResponse{
-		Urls: images,
-	}, nil
+	var urls []*pb.Image
+
+	for rows.Next() {
+		var image pb.Image
+		err := rows.Scan(&image.Url, &image.ImageType)
+		if err != nil {
+			return nil, status.Errorf(
+				codes.Internal,
+				"error scanning image %v",
+				err.Error(),
+			)
+		}
+
+		urls = append(urls, &image)
+	}
+
+	return urls, nil
 }
