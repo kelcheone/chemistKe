@@ -14,7 +14,6 @@ import (
 	productservice "github.com/kelcheone/chemistke/cmd/product-service"
 	userservice "github.com/kelcheone/chemistke/cmd/user-service"
 	"github.com/kelcheone/chemistke/internal/database"
-	"github.com/kelcheone/chemistke/internal/files"
 	cms_proto "github.com/kelcheone/chemistke/pkg/grpc/cms"
 	order_proto "github.com/kelcheone/chemistke/pkg/grpc/order"
 	product_proto "github.com/kelcheone/chemistke/pkg/grpc/product"
@@ -47,13 +46,8 @@ func main() {
 
 	defer db.Close()
 
-	files, err := files.NewFileClient()
-	if err != nil {
-		log.Fatalf("could not connect to files: %v\n", err)
-	}
-
 	newUservice := userservice.NewService(db)
-	newProductService := productservice.NewProductService(files, db)
+	newProductService := productservice.NewProductService(db)
 	newOrderService := orderservice.NewOrderService(db)
 	newCmsService := cmsservice.NewCmsService(db)
 
