@@ -1,10 +1,9 @@
 package productservice
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
-	"fmt"
-	"time"
 
 	"github.com/kelcheone/chemistke/internal/database"
 	"github.com/kelcheone/chemistke/internal/files"
@@ -14,15 +13,13 @@ import (
 )
 
 type ProductService struct {
-	db    database.DB
-	files *files.Files
+	db database.DB
 	pb.UnimplementedProductServiceServer
 }
 
-func NewProductService(files *files.Files, db database.DB) *ProductService {
+func NewProductService(db database.DB) *ProductService {
 	return &ProductService{
-		db:    db,
-		files: files,
+		db: db,
 	}
 }
 
@@ -65,34 +62,83 @@ func (s *ProductService) GetProduct(
 	ctx context.Context,
 	req *pb.GetProductRequest,
 ) (*pb.GetProductResponse, error) {
-	stmt := `SELECT id, name, description, category, sub_category, brand, price, quantity FROM products WHERE id=$1`
-	var product pb.Product
-	var productId string
-	err := s.db.QueryRow(stmt, req.Id.Value).Scan(
-		&productId,
-		&product.Name,
-		&product.Description,
-		&product.Category,
-		&product.SubCategory,
-		&product.Brand,
-		&product.Price,
-		&product.Quantity,
-	)
+	stmt := `
+  SELECT 
+   p.id, 
+   p.name, 
+   p.description, 
+   p.category, 
+   p.sub_category, 
+   p.brand, 
+   p.price, 
+   p.quantity, 
+   pi.url AS image_url,
+   pi.image_type
+  FROM 
+    products p 
+  LEFT JOIN 
+    productimages pi 
+  ON
+    p.id  = pi.product_id
+  WHERE 
+    p.id=$1;`
+
+	rows, err := s.db.Query(stmt, req.Id.Value)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, status.Errorf(
-				codes.NotFound,
-				"product with id %s not found",
-				req.Id.Value,
-			)
-		}
 		return nil, status.Errorf(
 			codes.Internal,
-			"error getting product: %v",
+			"error getting product: %+v",
 			err,
 		)
 	}
-	product.Id = &pb.UUID{Value: productId}
+
+	defer rows.Close()
+
+	var product pb.Product
+	var productId string
+	product.Images = []*pb.Image{}
+
+	for rows.Next() {
+
+		var imageUrl, imageType sql.NullString
+
+		err := rows.Scan(
+			&productId,
+			&product.Name,
+			&product.Description,
+			&product.Category,
+			&product.SubCategory,
+			&product.Brand,
+			&product.Price,
+			&product.Quantity,
+			&imageUrl,
+			&imageType,
+		)
+		if err != nil {
+			return nil, status.Errorf(
+				codes.Internal,
+				"error scanning rows: %v",
+				err.Error(),
+			)
+		}
+		image := pb.Image{
+			Url:       imageUrl.String,
+			ImageType: imageType.String,
+		}
+		if image.Url != "" {
+			product.Images = append(product.Images, &image)
+		}
+
+		product.Id = &pb.UUID{Value: productId}
+
+	}
+	if productId == "" {
+		return nil, status.Errorf(
+			codes.NotFound,
+			"product with id %s not found.",
+			req.Id.Value,
+		)
+	}
 	return &pb.GetProductResponse{
 		Product: &product,
 	}, nil
@@ -163,7 +209,28 @@ func (s *ProductService) GetProducts(
 	ctx context.Context,
 	req *pb.GetProductsRequest,
 ) (*pb.GetProductsResponse, error) {
-	stmt := `SELECT id, name, description, category, sub_category, brand, price, quantity FROM products LIMIT $1 OFFSET $2`
+	stmt := `
+	  SELECT
+	   p.id,
+	   p.name,
+	   p.description,
+	   p.category,
+	   p.sub_category,
+	   p.brand,
+	   p.price,
+	   p.quantity,
+	   pi.url AS image_url,
+	   pi.image_type
+	  FROM
+	    products p
+	  LEFT JOIN
+	    productimages pi
+	  ON
+	    p.id  = pi.product_id
+	  LIMIT $1
+	  OFFSET $2
+	`
+
 	rows, err := s.db.Query(stmt, req.Limit, req.Page)
 	if err != nil {
 		return nil, status.Errorf(
@@ -173,10 +240,14 @@ func (s *ProductService) GetProducts(
 		)
 	}
 
-	var products []*pb.Product
+	defer rows.Close()
+
+	productsMap := make(map[string]*pb.Product)
+
 	for rows.Next() {
 		var product pb.Product
 		var productId string
+		var imageUrl, imageType sql.NullString
 
 		err := rows.Scan(
 			&productId,
@@ -187,6 +258,8 @@ func (s *ProductService) GetProducts(
 			&product.Brand,
 			&product.Price,
 			&product.Quantity,
+			&imageUrl,
+			&imageType,
 		)
 		if err != nil {
 			return nil, status.Errorf(
@@ -197,7 +270,28 @@ func (s *ProductService) GetProducts(
 		}
 		product.Id = &pb.UUID{Value: productId}
 
-		products = append(products, &product)
+		image := pb.Image{
+			Url:       imageUrl.String,
+			ImageType: imageType.String,
+		}
+
+		if exists, found := productsMap[productId]; found {
+			if image.Url != "" {
+				exists.Images = append(exists.Images, &image)
+			}
+		} else {
+			product.Id = &pb.UUID{Value: productId}
+			if image.Url != "" {
+				product.Images = []*pb.Image{&image}
+			}
+			productsMap[productId] = &product
+		}
+
+	}
+
+	var products []*pb.Product
+	for _, p := range productsMap {
+		products = append(products, p)
 	}
 
 	return &pb.GetProductsResponse{
@@ -211,20 +305,46 @@ func (s *ProductService) GetProductsByCategory(
 	ctx context.Context,
 	req *pb.GetProductsByCategoryRequest,
 ) (*pb.GetProductsByCategoryResponse, error) {
-	stmt := `SELECT id, name, description, category, sub_category, brand, price, quantity FROM products WHERE category=$1 LIMIT $2 OFFSET $3`
+	stmt := `
+	  SELECT
+	   p.id,
+	   p.name,
+	   p.description,
+	   p.category,
+	   p.sub_category,
+	   p.brand,
+	   p.price,
+	   p.quantity,
+	   pi.url AS image_url,
+	   pi.image_type
+	  FROM
+	    products p
+	  LEFT JOIN
+	    productimages pi
+	  ON
+	    p.id  = pi.product_id
+    WHERE 
+      category=$1
+	  LIMIT $2
+	  OFFSET $3
+	`
 	rows, err := s.db.Query(stmt, req.Category, req.Limit, req.Page)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
-			"error getting products by category: %v",
+			"error getting products: %v",
 			err,
 		)
 	}
 
-	var products []*pb.Product
+	defer rows.Close()
+
+	productsMap := make(map[string]*pb.Product)
+
 	for rows.Next() {
 		var product pb.Product
 		var productId string
+		var imageUrl, imageType sql.NullString
 
 		err := rows.Scan(
 			&productId,
@@ -235,6 +355,8 @@ func (s *ProductService) GetProductsByCategory(
 			&product.Brand,
 			&product.Price,
 			&product.Quantity,
+			&imageUrl,
+			&imageType,
 		)
 		if err != nil {
 			return nil, status.Errorf(
@@ -245,7 +367,28 @@ func (s *ProductService) GetProductsByCategory(
 		}
 		product.Id = &pb.UUID{Value: productId}
 
-		products = append(products, &product)
+		image := pb.Image{
+			Url:       imageUrl.String,
+			ImageType: imageType.String,
+		}
+
+		if exists, found := productsMap[productId]; found {
+			if image.Url != "" {
+				exists.Images = append(exists.Images, &image)
+			}
+		} else {
+			product.Id = &pb.UUID{Value: productId}
+			if image.Url != "" {
+				product.Images = []*pb.Image{&image}
+			}
+			productsMap[productId] = &product
+		}
+
+	}
+
+	var products []*pb.Product
+	for _, p := range productsMap {
+		products = append(products, p)
 	}
 
 	return &pb.GetProductsByCategoryResponse{
@@ -259,20 +402,46 @@ func (s *ProductService) GetProductsBySubCategory(
 	ctx context.Context,
 	req *pb.GetProductsBySubCategoryRequest,
 ) (*pb.GetProductsBySubCategoryResponse, error) {
-	stmt := `SELECT id, name, description, category, sub_category, brand, price, quantity FROM products WHERE sub_category=$1 LIMIT $2 OFFSET $3`
+	stmt := `
+	  SELECT
+	   p.id,
+	   p.name,
+	   p.description,
+	   p.category,
+	   p.sub_category,
+	   p.brand,
+	   p.price,
+	   p.quantity,
+	   pi.url AS image_url,
+	   pi.image_type
+	  FROM
+	    products p
+	  LEFT JOIN
+	    productimages pi
+	  ON
+	    p.id  = pi.product_id
+    WHERE 
+     sub_category=$1
+	  LIMIT $2
+	  OFFSET $3
+	`
 	rows, err := s.db.Query(stmt, req.SubCategory, req.Limit, req.Page)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
-			"error getting products by sub category: %v",
+			"error getting products: %v",
 			err,
 		)
 	}
 
-	var products []*pb.Product
+	defer rows.Close()
+
+	productsMap := make(map[string]*pb.Product)
+
 	for rows.Next() {
 		var product pb.Product
 		var productId string
+		var imageUrl, imageType sql.NullString
 
 		err := rows.Scan(
 			&productId,
@@ -283,6 +452,8 @@ func (s *ProductService) GetProductsBySubCategory(
 			&product.Brand,
 			&product.Price,
 			&product.Quantity,
+			&imageUrl,
+			&imageType,
 		)
 		if err != nil {
 			return nil, status.Errorf(
@@ -293,7 +464,28 @@ func (s *ProductService) GetProductsBySubCategory(
 		}
 		product.Id = &pb.UUID{Value: productId}
 
-		products = append(products, &product)
+		image := pb.Image{
+			Url:       imageUrl.String,
+			ImageType: imageType.String,
+		}
+
+		if exists, found := productsMap[productId]; found {
+			if image.Url != "" {
+				exists.Images = append(exists.Images, &image)
+			}
+		} else {
+			product.Id = &pb.UUID{Value: productId}
+			if image.Url != "" {
+				product.Images = []*pb.Image{&image}
+			}
+			productsMap[productId] = &product
+		}
+
+	}
+
+	var products []*pb.Product
+	for _, p := range productsMap {
+		products = append(products, p)
 	}
 
 	return &pb.GetProductsBySubCategoryResponse{
@@ -307,20 +499,46 @@ func (s *ProductService) GetProductsByBrand(
 	ctx context.Context,
 	req *pb.GetProductsByBrandRequest,
 ) (*pb.GetProductsByBrandResponse, error) {
-	stmt := `SELECT id, name, description, category, sub_category, brand, price, quantity FROM products WHERE brand=$1 LIMIT $2 OFFSET $3`
+	stmt := `
+	  SELECT
+	   p.id,
+	   p.name,
+	   p.description,
+	   p.category,
+	   p.sub_category,
+	   p.brand,
+	   p.price,
+	   p.quantity,
+	   pi.url AS image_url,
+	   pi.image_type
+	  FROM
+	    products p
+	  LEFT JOIN
+	    productimages pi
+	  ON
+	    p.id  = pi.product_id
+    WHERE 
+     brand=$1
+	  LIMIT $2
+	  OFFSET $3
+	`
 	rows, err := s.db.Query(stmt, req.Brand, req.Limit, req.Page)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
-			"error getting products by brand: %v",
+			"error getting products: %v",
 			err,
 		)
 	}
 
-	var products []*pb.Product
+	defer rows.Close()
+
+	productsMap := make(map[string]*pb.Product)
+
 	for rows.Next() {
 		var product pb.Product
 		var productId string
+		var imageUrl, imageType sql.NullString
 
 		err := rows.Scan(
 			&productId,
@@ -331,6 +549,8 @@ func (s *ProductService) GetProductsByBrand(
 			&product.Brand,
 			&product.Price,
 			&product.Quantity,
+			&imageUrl,
+			&imageType,
 		)
 		if err != nil {
 			return nil, status.Errorf(
@@ -341,7 +561,28 @@ func (s *ProductService) GetProductsByBrand(
 		}
 		product.Id = &pb.UUID{Value: productId}
 
-		products = append(products, &product)
+		image := pb.Image{
+			Url:       imageUrl.String,
+			ImageType: imageType.String,
+		}
+
+		if exists, found := productsMap[productId]; found {
+			if image.Url != "" {
+				exists.Images = append(exists.Images, &image)
+			}
+		} else {
+			product.Id = &pb.UUID{Value: productId}
+			if image.Url != "" {
+				product.Images = []*pb.Image{&image}
+			}
+			productsMap[productId] = &product
+		}
+
+	}
+
+	var products []*pb.Product
+	for _, p := range productsMap {
+		products = append(products, p)
 	}
 
 	return &pb.GetProductsByBrandResponse{
@@ -351,23 +592,33 @@ func (s *ProductService) GetProductsByBrand(
 	}, nil
 }
 
-// GetUploadURL expects the productId, userId and the filename and returns the required file name.
-func (s *ProductService) GetUploadURL(
+// upload product image.
+func (s *ProductService) UploadProdctImages(
 	ctx context.Context,
-	req *pb.GetUploadURLRequest,
-) (*pb.GetUploadURLResponse, error) {
-	randId := time.Now().UnixNano()
-	key := fmt.Sprintf("products/%s/%d_%s", req.Id.Value, randId, req.FileName)
-	url, err := s.files.GetPresignedURL(key)
+	req *pb.UploadProdctImagesRequest,
+) (*pb.UploadProdctImagesResponse, error) {
+	// get product Id, image  then upload it and push the url to the databse.
+	fileReader := bytes.NewReader(req.ImageData)
+
+	resp, err := files.UploadImage(
+		fileReader,
+		req.ProductId.Value,
+		req.ImageName,
+	)
+	// add to database
+
+	stmt := `INSERT INTO productimages(product_id, image_type, url) VALUES ($1, $2, $3) RETURNING id;`
+	_, err = s.db.Exec(stmt, req.ProductId.Value, req.ImageType, resp)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
-			"error getting presigned url: %v",
-			err,
+			"could not upload the image %s",
+			err.Error(),
 		)
 	}
-	return &pb.GetUploadURLResponse{
-		Url: url,
+
+	return &pb.UploadProdctImagesResponse{
+		Message: resp,
 	}, nil
 }
 
@@ -377,17 +628,44 @@ func (s *ProductService) GetProductImages(
 	ctx context.Context,
 	req *pb.GetProductImagesRequest,
 ) (*pb.GetProductImagesResponse, error) {
-	// the images are found in the bucketname/products/images
-	images, err := s.files.GetProductImages(ctx, req.ProductId.Value)
+	urls, err := s.getProductImages(req.ProductId.Value)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetProductImagesResponse{
+		Urls: urls,
+	}, nil
+}
+
+func (s *ProductService) getProductImages(
+	productId string,
+) ([]*pb.Image, error) {
+	stmt := `SELECT url, image_type from productimages WHERE product_id=$1;`
+	rows, err := s.db.Query(stmt, productId)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
 			"error getting product images: %v",
-			err,
+			err.Error(),
 		)
 	}
 
-	return &pb.GetProductImagesResponse{
-		Urls: images,
-	}, nil
+	var urls []*pb.Image
+
+	for rows.Next() {
+		var image pb.Image
+		err := rows.Scan(&image.Url, &image.ImageType)
+		if err != nil {
+			return nil, status.Errorf(
+				codes.Internal,
+				"error scanning image %v",
+				err.Error(),
+			)
+		}
+
+		urls = append(urls, &image)
+	}
+
+	return urls, nil
 }

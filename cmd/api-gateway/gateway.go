@@ -77,6 +77,8 @@ func main() {
 
 	products.PATCH("", productsServer.UpdateProduct, utils.AuthMiddleware)
 	products.DELETE("/:id", productsServer.DeleteProduct, utils.AuthMiddleware)
+	products.POST("/images/upload", productsServer.UploadImage)
+	products.GET("/images/:id", productsServer.GetProductImages)
 
 	e.Logger.Fatal(e.Start(":9090"))
 }

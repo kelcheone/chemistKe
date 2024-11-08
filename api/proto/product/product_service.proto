@@ -10,11 +10,16 @@ service ProductService {
   rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductResponse) {}
   rpc UpdateProduct(UpdateProductRequest) returns (UpdateProductResponse) {}
   rpc GetProducts(GetProductsRequest) returns (GetProductsResponse) {}
-  rpc GetProductsByCategory(GetProductsByCategoryRequest) returns (GetProductsByCategoryResponse) {}
-  rpc GetProductsBySubCategory(GetProductsBySubCategoryRequest) returns (GetProductsBySubCategoryResponse) {}
-  rpc GetProductsByBrand(GetProductsByBrandRequest) returns (GetProductsByBrandResponse) {}
-  rpc GetUploadURL(GetUploadURLRequest) returns (GetUploadURLResponse) {}
-  rpc GetProductImages(GetProductImagesRequest) returns (GetProductImagesResponse) {}
+  rpc GetProductsByCategory(GetProductsByCategoryRequest)
+      returns (GetProductsByCategoryResponse) {}
+  rpc GetProductsBySubCategory(GetProductsBySubCategoryRequest)
+      returns (GetProductsBySubCategoryResponse) {}
+  rpc GetProductsByBrand(GetProductsByBrandRequest)
+      returns (GetProductsByBrandResponse) {}
+  rpc UploadProdctImages(UploadProdctImagesRequest)
+      returns (UploadProdctImagesResponse) {}
+  rpc GetProductImages(GetProductImagesRequest)
+      returns (GetProductImagesResponse) {}
 }
 
 message Product {
@@ -29,46 +34,26 @@ message Product {
   repeated Image images = 9;
 }
 
-message UUID {
-  string value = 1;
-}
+message UUID { string value = 1; }
 
-message Image {
-  string url = 1;
-}
-
-message CreateProductRequest {
-  Product product = 1;
-}
+message CreateProductRequest { Product product = 1; }
 
 message CreateProductResponse {
   string message = 1;
   UUID id = 2;
 }
 
-message GetProductRequest {
-  UUID id = 1;
-}
+message GetProductRequest { UUID id = 1; }
 
-message GetProductResponse {
-  Product product = 1;
-}
+message GetProductResponse { Product product = 1; }
 
-message DeleteProductRequest {
-  UUID id = 1;
-}
+message DeleteProductRequest { UUID id = 1; }
 
-message DeleteProductResponse {
-  string message = 1;
-}
+message DeleteProductResponse { string message = 1; }
 
-message UpdateProductRequest {
-  Product product = 1;
-}
+message UpdateProductRequest { Product product = 1; }
 
-message UpdateProductResponse {
-  string message = 1;
-}
+message UpdateProductResponse { string message = 1; }
 
 message GetProductsRequest {
   int32 limit = 1;
@@ -119,20 +104,21 @@ message GetProductsByBrandResponse {
   int32 page = 3;
 }
 
-message GetUploadURLRequest {
-  UUID id = 1;
-  UUID userID = 2;
-  string FileName = 3;
-}
+message GetProductImagesRequest { UUID productId = 1; }
 
-message GetUploadURLResponse {
-  string url = 1;
-}
+message GetProductImagesResponse { repeated Image urls = 1; }
 
-message GetProductImagesRequest {
+message UploadProdctImagesRequest {
   UUID productId = 1;
+  bytes imageData = 2;
+  string imageName = 3;
+  string imageType = 4;
+  int32 imageSize = 5;
 }
 
-message GetProductImagesResponse {
-  repeated string urls = 1;
+message UploadProdctImagesResponse { string message = 1; }
+
+message Image {
+  string url = 1;
+  string image_type = 2;
 }

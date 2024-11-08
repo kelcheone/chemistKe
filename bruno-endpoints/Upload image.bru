@@ -1,0 +1,17 @@
+meta {
+  name: Upload image
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:9090/api/v1/products/images/upload
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  product-id: 2be3f503-84b6-4959-be84-d0dfd6a4d898
+  file: @file(/home/kelche/Pictures/Screenshots/Screenshot from 2024-10-30 11-06-15.png)
+  image-type: thumbnail
+}
