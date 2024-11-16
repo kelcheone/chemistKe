@@ -46,6 +46,14 @@ func main() {
 	}
 
 	defer CloseOrderConn()
+
+	cmsServer, CloseCmsConn, err := routes.ConnectCmsServer("localhost:8090")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer CloseCmsConn()
+
 	e := echo.New()
 
 	e.Use(middleware.Logger())
@@ -95,5 +103,32 @@ func main() {
 	orders.GET("/user", ordersServer.GetUserOders)
 	orders.GET("", ordersServer.GetOders)
 	orders.PATCH("", ordersServer.UpdateOrder)
+
+	cms := v1.Group("/cms")
+
+	authors := cms.Group("/authors")
+	authors.POST("", cmsServer.CreateAuthor, utils.AuthMiddleware)
+	authors.GET("/:id", cmsServer.GetAuthor)
+	authors.PATCH("", cmsServer.UpdateAuthor, utils.AuthMiddleware)
+	authors.DELETE("/:id", cmsServer.DeleteAuthor, utils.AuthMiddleware)
+	authors.GET("", cmsServer.ListAuthors)
+
+	categories := cms.Group("/categories")
+	categories.POST("", cmsServer.CreateCategory, utils.AuthMiddleware)
+	categories.GET("/:id", cmsServer.GetCategory)
+	categories.GET("", cmsServer.ListCategories)
+	categories.PATCH("", cmsServer.UpdateCategory, utils.AuthMiddleware)
+	categories.DELETE("/:id", cmsServer.DeleteCategory, utils.AuthMiddleware)
+
+	posts := cms.Group("/posts")
+	posts.POST("", cmsServer.CreatePost, utils.AuthMiddleware)
+	posts.GET("/:id", cmsServer.GetPost)
+	posts.GET("", cmsServer.ListPosts)
+	posts.PATCH("", cmsServer.UpdatePost, utils.AuthMiddleware)
+	posts.DELETE("/:id", cmsServer.DeletePost, utils.AuthMiddleware)
+	posts.GET("/category", cmsServer.GetCategoryPosts)
+	posts.GET("/author", cmsServer.GetAuthorPosts)
+	posts.GET("/get-by-author-category", cmsServer.GetAuthorCategoryPosts)
+
 	e.Logger.Fatal(e.Start(":9090"))
 }
