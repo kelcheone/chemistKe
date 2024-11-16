@@ -38,6 +38,14 @@ func main() {
 
 	defer CloseProductConn()
 
+	ordersServer, CloseOrderConn, err := routes.ConnectOrdersServer(
+		"localhost:8090",
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer CloseOrderConn()
 	e := echo.New()
 
 	e.Use(middleware.Logger())
@@ -80,5 +88,12 @@ func main() {
 	products.POST("/images/upload", productsServer.UploadImage)
 	products.GET("/images/:id", productsServer.GetProductImages)
 
+	orders := v1.Group("/orders", utils.AuthMiddleware)
+	orders.POST("", ordersServer.CreateOrder)
+	orders.GET("/:id", ordersServer.GetOrder)
+	orders.DELETE("/:id", ordersServer.DeleteOrder)
+	orders.GET("/user", ordersServer.GetUserOders)
+	orders.GET("", ordersServer.GetOders)
+	orders.PATCH("", ordersServer.UpdateOrder)
 	e.Logger.Fatal(e.Start(":9090"))
 }
