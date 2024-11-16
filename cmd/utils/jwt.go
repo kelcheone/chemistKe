@@ -19,24 +19,32 @@ func int() {
 }
 
 type jwtCustomClaims struct {
-	Id    string `json:"id"`
-	Name  string `json:"name"`
-	Admin bool   `json:"admin"`
+	Id     string `json:"id"`
+	Name   string `json:"name"`
+	Admin  bool   `json:"admin"`
+	Author bool   `json:"author"`
 	jwt.RegisteredClaims
 }
 
 func CreateToken(id string, name string, role string) (string, error) {
 	var admin bool
-	if role == "USER" {
+	var author bool
+
+	switch role {
+	case "USER":
 		admin = false
-	} else {
+	case "AUTHOR":
+		author = true
+	default:
 		admin = true
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    id,
-		"name":  name,
-		"admin": admin,
-		"exp":   time.Now().Add(time.Hour * 168).Unix(),
+		"id":     id,
+		"name":   name,
+		"admin":  admin,
+		"author": author,
+		"exp":    time.Now().Add(time.Hour * 168).Unix(),
 	})
 	tokenString, err := token.SignedString(secretKey)
 	if err != nil {
