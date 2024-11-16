@@ -15,7 +15,10 @@ import (
 )
 
 func Init() error {
-	conn, err := grpc.NewClient("localhost:8090", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(
+		"localhost:8090",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
 	if err != nil {
 		return err
 	}
@@ -43,8 +46,12 @@ func Init() error {
 	// create order
 	quantity := 5
 	total := product.Price * float32(quantity)
+	_ = userId
 	newOrder := &order_proto.Order{
-		UserId:    &order_proto.UUID{Value: userId},
+		// UserId:    &order_proto.UUID{Value: userId},
+		UserId: &order_proto.UUID{
+			Value: "1bf447b8-a129-42a2-b11e-684a801568ff",
+		},
 		ProductId: &order_proto.UUID{Value: productId},
 		Quantity:  int32(quantity),
 		Total:     total,
@@ -61,7 +68,10 @@ func Init() error {
 	fmt.Printf("%+v\n", order.Order.Id)
 
 	// get orders-----
-	gOrder, err := c.GetOrder(ctx, &order_proto.GetOrderRequest{OrderId: order.Order.Id})
+	gOrder, err := c.GetOrder(
+		ctx,
+		&order_proto.GetOrderRequest{OrderId: order.Order.Id},
+	)
 	if err != nil {
 		return err
 	}
@@ -85,7 +95,14 @@ func Init() error {
 	fmt.Printf("%+v\n", upOrder)
 
 	// get userOrders
-	userOrders, err := c.GetUserOrders(ctx, &order_proto.GetUserOrdersRequest{UserId: order.Order.Id, Limit: 8, Page: 1})
+	userOrders, err := c.GetUserOrders(
+		ctx,
+		&order_proto.GetUserOrdersRequest{
+			UserId: order.Order.Id,
+			Limit:  8,
+			Page:   1,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -96,7 +113,10 @@ func Init() error {
 		fmt.Printf("%d ----> %+v\n", i, uOrder)
 	}
 
-	gOrders, err := c.GetOrders(ctx, &order_proto.GetOrdersRequest{Limit: 10, Page: 1})
+	gOrders, err := c.GetOrders(
+		ctx,
+		&order_proto.GetOrdersRequest{Limit: 10, Page: 1},
+	)
 	if err != nil {
 		return err
 	}
@@ -107,12 +127,28 @@ func Init() error {
 		fmt.Printf("%d ----> %+v\n", i, uOrder)
 	}
 
-	delRes, err := c.DeleteOrder(ctx, &order_proto.DeleteOrderRequest{OrderId: gOrder.Order.Id})
+	delRes, err := c.DeleteOrder(
+		ctx,
+		&order_proto.DeleteOrderRequest{OrderId: gOrder.Order.Id},
+	)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println("--------- Deleting orders sucessfull ------")
 	fmt.Printf("%+v\n", delRes)
+
+	for range 20 {
+
+		order, _ = c.OrderProduct(ctx, &order_proto.OrderProductRequest{
+			UserId:    newOrder.UserId,
+			ProductId: newOrder.ProductId,
+			Quantity:  newOrder.Quantity,
+			Total:     newOrder.Total,
+		})
+		fmt.Println("-----order Created ---------")
+
+		fmt.Printf("%+v\n", order.Order.Id)
+	}
 	return nil
 }

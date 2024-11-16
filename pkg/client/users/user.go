@@ -144,4 +144,26 @@ func CreateUsers(
 	}
 }
 
+func CreateUser(
+	ctx context.Context,
+	c user_proto.UserServiceClient,
+) (string, error) {
+	user := &user_proto.AddUserRequest{
+		User: &user_proto.User{
+			Name:  gofakeit.Name(),
+			Email: gofakeit.Email(),
+			Phone: gofakeit.Phone(),
+			// Password: gofakeit.Password(true, true, true, true, false, 12),
+			Password: "1234567",
+			Role:     user_proto.UserRoles_ADMIN,
+		},
+	}
+
+	fmt.Println(user.User.Password)
+	fmt.Println(user.User.Email)
+
+	resp, err := c.AddUser(ctx, user)
+	return resp.Id.Value, err
+}
+
 // ------------------Add 20 Users

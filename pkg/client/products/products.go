@@ -1,13 +1,9 @@
 package productsClient
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
-	"os"
 	"time"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -98,67 +94,11 @@ func Init() error {
 		fmt.Printf("%d------> %s, \t kes%.2f\n", i, p.Name, p.Price)
 	}
 
-	url, err := c.GetUploadURL(
-		ctx,
-		&product_proto.GetUploadURLRequest{
-			Id:       &product_proto.UUID{Value: createRes},
-			FileName: "image1.png",
-		},
-	)
-	fmt.Printf("%+v\n", url)
-
-	imagePath := "./public/images/image1.png"
-	err = uploadFile(imagePath, url.Url)
-	if err != nil {
-		return err
-	}
-	sT := time.Now()
-	images, err := c.GetProductImages(
-		ctx,
-		&product_proto.GetProductImagesRequest{
-			ProductId: &product_proto.UUID{Value: createRes},
-		},
-	)
-	if err != nil {
-		log.Fatalf("Could not get images: %v\n", err)
-	}
-
-	for i, image := range images.Urls {
-		fmt.Printf("%d ----------> %s\n", i, image)
-	}
-	fmt.Println(time.Since(sT))
-
 	// for range 20 {
 	// 	_ = CreateProduct(ctx, c)
 	// }
 
 	return nil
-}
-
-func uploadFile(filePath string, url string) error {
-	file, err := os.Open(filePath)
-	defer file.Close()
-	buffer := bytes.NewBuffer(nil)
-	if _, err := io.Copy(buffer, file); err != nil {
-		return err
-	}
-	request, err := http.NewRequest(http.MethodPut, url, buffer)
-	if err != nil {
-		return err
-	}
-	request.Header.Set("Content-Type", "multipart/form-data")
-	// 'x-amz-acl': 'public-read' -- This header is required for public read ACL for Digital ocean
-	request.Header.Set("x-amz-acl", "bucket-owner-full-control")
-	client := &http.Client{}
-	resp, err := client.Do(request)
-
-	if resp.StatusCode == http.StatusOK {
-		fmt.Println("Upload successful")
-	} else {
-		body, _ := io.ReadAll(resp.Body)
-		fmt.Printf("Upload failed. Status: %s, Body: %s\n", resp.Status, string(body))
-	}
-	return err
 }
 
 func CreateProduct(
