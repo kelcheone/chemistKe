@@ -1,0 +1,24 @@
+meta {
+  name: Create Order
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:9090/api/v1/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiZXhwIjoxNzMxODY5ODE0LCJpZCI6IjFiZjQ0N2I4LWExMjktNDJhMi1iMTFlLTY4NGE4MDE1NjhmZiIsIm5hbWUiOiJrZXZpbiBDaGVydWl5b3QifQ.7nKRRm4Pe4CP0ehrao3hBF59uCpu2xLWhkNm95IRa1c
+}
+
+body:json {
+  {
+    "product_id":"2be3f503-84b6-4959-be84-d0dfd6a4d898",
+    "user_id": "1bf447b8-a129-42a2-b11e-684a801568ff",
+    "quatity": 1,
+    "total":88.87
+  }
+}

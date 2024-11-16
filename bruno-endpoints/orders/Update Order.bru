@@ -1,0 +1,22 @@
+meta {
+  name: Update Order
+  type: http
+  seq: 6
+}
+
+patch {
+  url: http://localhost:9090/api/v1/orders
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id":"9ef433aa-b57f-489e-b99a-71677fd1682b",
+    "product_id":"2be3f503-84b6-4959-be84-d0dfd6a4d898",
+    "user_id": "1bf447b8-a129-42a2-b11e-684a801568ff",
+    "status":"shipped",
+    "quatity": 2,
+    "total":176.90
+  }
+}

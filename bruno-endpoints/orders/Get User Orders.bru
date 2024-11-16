@@ -1,0 +1,22 @@
+meta {
+  name: Get User Orders
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://localhost:9090/api/v1/orders
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiZXhwIjoxNzMxOTU2MTE4LCJpZCI6IjFiZjQ0N2I4LWExMjktNDJhMi1iMTFlLTY4NGE4MDE1NjhmZiIsIm5hbWUiOiJrZXZpbiBDaGVydWl5b3QifQ.wBBjXF5wMHHatlalKDPGYldvQ2UdFP316sinUvrVIEY
+}
+
+body:json {
+  {
+    "limit": 2,
+    "page":0
+  }
+}
