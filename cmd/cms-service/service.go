@@ -245,7 +245,7 @@ func (c *CmsService) UpdateCategory(
 	ctx context.Context,
 	req *pb.UpdateCategoryRequest,
 ) (*pb.UpdateCategoryResponse, error) {
-	stmt := `UPDATE categories name=$1, slug=$2, description=$3 WHERE id=$4`
+	stmt := `UPDATE categories SET name=$1, slug=$2, description=$3 WHERE id=$4`
 	_, err := c.db.Exec(
 		stmt,
 		req.Category.Name,
@@ -441,7 +441,7 @@ func (c *CmsService) DeleteAuthor(
 			err,
 		)
 	}
-	return &pb.DeleteAuthorResponse{AuthorId: req.AuthorId}, nil
+	return &pb.DeleteAuthorResponse{}, nil
 }
 
 func (c *CmsService) ListAuthors(
@@ -516,7 +516,7 @@ func (c *CmsService) GetAuthorCategoryPosts(
 	ctx context.Context,
 	req *pb.GetAuthorCategoryPostsRequest,
 ) (*pb.GetAuthorCategoryPostsResponse, error) {
-	stmt := `SELECT id, published_date, updated_date, cover_image, title, description, url,
+	stmt := `SELECT id, published_date, updated_date, cover_image, title, description,
   slug, content, status, author_id, category_id FROM content WHERE category_id=$1 AND author_id=$2 LIMIT $3 OFFSET $4 `
 
 	rows, err := c.db.Query(
@@ -543,6 +543,27 @@ func (c *CmsService) GetAuthorCategoryPosts(
 		posts = append(posts, post)
 	}
 	return &pb.GetAuthorCategoryPostsResponse{Posts: posts}, nil
+}
+
+func (c *CmsService) UpdateUserRole(
+	ctx context.Context,
+	req *pb.UpdateUserRoleRequest,
+) (*pb.UpdateUserRoleResponse, error) {
+	stmt := `UPDATE users SET role=$1 WHERE id=$2`
+
+	_, err := c.db.Exec(stmt, req.Role, req.UserId.Value)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, status.Errorf(codes.NotFound, "user does not exist")
+		}
+		return nil, status.Errorf(
+			codes.Internal,
+			"could not update user: %v",
+			err.Error(),
+		)
+	}
+
+	return &pb.UpdateUserRoleResponse{}, nil
 }
 
 func PostRowScanner(rows *sql.Rows) (*pb.Post, error) {

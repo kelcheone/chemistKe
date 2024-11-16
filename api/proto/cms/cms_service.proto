@@ -15,19 +15,20 @@ service CmsService {
   rpc UpdateCategory(UpdateCategoryRequest) returns (UpdateCategoryResponse) {}
   rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse) {}
   rpc ListCategories(ListCategoriesRequest) returns (ListCategoriesResponse) {}
-  rpc GetCategoryPosts(GetCategoryPostsRequest) returns (GetCategoryPostsResponse) {}
+  rpc GetCategoryPosts(GetCategoryPostsRequest)
+      returns (GetCategoryPostsResponse) {}
   rpc CreateAuthor(CreateAuthorRequest) returns (CreateAuthorResponse) {}
   rpc GetAuthor(GetAuthorRequest) returns (GetAuthorResponse) {}
   rpc UpdateAuthor(UpdateAuthorRequest) returns (UpdateAuthorResponse) {}
   rpc DeleteAuthor(DeleteAuthorRequest) returns (DeleteAuthorResponse) {}
   rpc ListAuthors(ListAuthorsRequest) returns (ListAuthorsResponse) {}
   rpc GetAuthorPosts(GetAuthorPostsRequest) returns (GetAuthorPostsResponse) {}
-  rpc GetAuthorCategoryPosts(GetAuthorCategoryPostsRequest) returns (GetAuthorCategoryPostsResponse) {}
+  rpc GetAuthorCategoryPosts(GetAuthorCategoryPostsRequest)
+      returns (GetAuthorCategoryPostsResponse) {}
+  rpc UpdateUserRole(UpdateUserRoleRequest) returns (UpdateUserRoleResponse) {}
 }
 
-message UUID {
-  string value = 1;
-}
+message UUID { string value = 1; }
 
 message Post {
   UUID post_id = 1;
@@ -43,47 +44,31 @@ message Post {
   string status = 11;
 }
 
-message CreatePostRequest {
-  Post post = 1;
-}
+message CreatePostRequest { Post post = 1; }
 
-message CreatePostResponse {
-  UUID post_id = 1;
-}
+message CreatePostResponse { UUID post_id = 1; }
 
-message GetPostRequest {
-  UUID post_id = 1;
-}
+message GetPostRequest { UUID post_id = 1; }
 
-message GetPostResponse {
-  Post post = 1;
-}
+message GetPostResponse { Post post = 1; }
 
 message UpdatePostRequest {
   UUID post_id = 1;
   Post post = 2;
 }
 
-message UpdatePostResponse {
-  UUID post_id = 1;
-}
+message UpdatePostResponse { UUID post_id = 1; }
 
-message DeletePostRequest {
-  UUID post_id = 1;
-}
+message DeletePostRequest { UUID post_id = 1; }
 
-message DeletePostResponse {
-  UUID post_id = 1;
-}
+message DeletePostResponse { UUID post_id = 1; }
 
 message ListPostsRequest {
   int32 page = 1;
   int32 per_page = 2;
 }
 
-message ListPostsResponse {
-  repeated Post posts = 1;
-}
+message ListPostsResponse { repeated Post posts = 1; }
 
 message Category {
   UUID category_id = 1;
@@ -92,47 +77,31 @@ message Category {
   string description = 4;
 }
 
-message CreateCategoryRequest {
-  Category category = 1;
-}
+message CreateCategoryRequest { Category category = 1; }
 
-message CreateCategoryResponse {
-  UUID category_id = 1;
-}
+message CreateCategoryResponse { UUID category_id = 1; }
 
-message GetCategoryRequest {
-  UUID category_id = 1;
-}
+message GetCategoryRequest { UUID category_id = 1; }
 
-message GetCategoryResponse {
-  Category category = 1;
-}
+message GetCategoryResponse { Category category = 1; }
 
 message UpdateCategoryRequest {
   UUID category_id = 1;
   Category category = 2;
 }
 
-message UpdateCategoryResponse {
-  UUID category_id = 1;
-}
+message UpdateCategoryResponse { UUID category_id = 1; }
 
-message DeleteCategoryRequest {
-  UUID category_id = 1;
-}
+message DeleteCategoryRequest { UUID category_id = 1; }
 
-message DeleteCategoryResponse {
-  UUID category_id = 1;
-}
+message DeleteCategoryResponse { UUID category_id = 1; }
 
 message ListCategoriesRequest {
   int32 page = 1;
   int32 per_page = 2;
 }
 
-message ListCategoriesResponse {
-  repeated Category categories = 1;
-}
+message ListCategoriesResponse { repeated Category categories = 1; }
 
 message GetCategoryPostsRequest {
   UUID category_id = 1;
@@ -140,9 +109,7 @@ message GetCategoryPostsRequest {
   int32 per_page = 3;
 }
 
-message GetCategoryPostsResponse {
-  repeated Post posts = 1;
-}
+message GetCategoryPostsResponse { repeated Post posts = 1; }
 
 // an author is a User of Role Author so it has a user_id
 message Author {
@@ -153,47 +120,31 @@ message Author {
   UUID user_id = 6;
 }
 
-message CreateAuthorRequest {
-  Author author = 1;
-}
+message CreateAuthorRequest { Author author = 1; }
 
-message CreateAuthorResponse {
-  UUID author_id = 1;
-}
+message CreateAuthorResponse { UUID author_id = 1; }
 
-message GetAuthorRequest {
-  UUID author_id = 1;
-}
+message GetAuthorRequest { UUID author_id = 1; }
 
-message GetAuthorResponse {
-  Author author = 1;
-}
+message GetAuthorResponse { Author author = 1; }
 
 message UpdateAuthorRequest {
   UUID author_id = 1;
   Author author = 2;
 }
 
-message UpdateAuthorResponse {
-  UUID author_id = 1;
-}
+message UpdateAuthorResponse { UUID author_id = 1; }
 
-message DeleteAuthorRequest {
-  UUID author_id = 1;
-}
+message DeleteAuthorRequest { UUID author_id = 1; }
 
-message DeleteAuthorResponse {
-  UUID author_id = 1;
-}
+message DeleteAuthorResponse { UUID author_id = 1; }
 
 message ListAuthorsRequest {
   int32 page = 1;
   int32 per_page = 2;
 }
 
-message ListAuthorsResponse {
-  repeated Author authors = 1;
-}
+message ListAuthorsResponse { repeated Author authors = 1; }
 
 message GetAuthorPostsRequest {
   UUID author_id = 1;
@@ -201,9 +152,7 @@ message GetAuthorPostsRequest {
   int32 per_page = 3;
 }
 
-message GetAuthorPostsResponse {
-  repeated Post posts = 1;
-}
+message GetAuthorPostsResponse { repeated Post posts = 1; }
 
 message GetAuthorCategoryPostsRequest {
   UUID author_id = 1;
@@ -212,6 +161,17 @@ message GetAuthorCategoryPostsRequest {
   int32 per_page = 4;
 }
 
-message GetAuthorCategoryPostsResponse {
-  repeated Post posts = 1;
+message GetAuthorCategoryPostsResponse { repeated Post posts = 1; }
+
+enum UserRoles {
+  ADMIN = 0;
+  USER = 1;
+  GUEST = 2;
+  AUTHOR = 3;
 }
+message UpdateUserRoleRequest {
+  UUID user_id = 1;
+  UserRoles role = 2;
+}
+
+message UpdateUserRoleResponse {}
