@@ -32,7 +32,7 @@ type GetUserResponse struct {
 }
 
 type ErrResponse struct {
-	Message string `json:"message"`
+	Message string `json:"error"`
 }
 
 type UserServer struct {

@@ -27,10 +27,6 @@ type ProductServer struct {
 	ProductClient product_proto.ProductServiceClient
 }
 
-type IdReq struct {
-	Id string `json:"id"`
-}
-
 func ConnectProductServer(link string) (*ProductServer, func(), error) {
 	productConn, err := grpc.NewClient(
 		link,
