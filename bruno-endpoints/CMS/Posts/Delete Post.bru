@@ -1,0 +1,15 @@
+meta {
+  name: Delete Post
+  type: http
+  seq: 4
+}
+
+delete {
+  url: http://localhost:9090/api/v1/cms/posts/320f6027-0a84-4097-ad9e-8ef2661ad5ef
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{Token}}
+}

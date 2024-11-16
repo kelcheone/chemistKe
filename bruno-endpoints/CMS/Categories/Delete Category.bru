@@ -1,0 +1,15 @@
+meta {
+  name: Delete Category
+  type: http
+  seq: 2
+}
+
+delete {
+  url: http://localhost:9090/api/v1/cms/categories/201fe084-56a6-442e-ba92-b562480986c7
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiYXV0aG9yIjpmYWxzZSwiZXhwIjoxNzMyMjY2MzcwLCJpZCI6IjFiZjQ0N2I4LWExMjktNDJhMi1iMTFlLTY4NGE4MDE1NjhmZiIsIm5hbWUiOiJrZXZpbiBDaGVydWl5b3QifQ.oz8scnyuFmjJDSTDV3I33jXC7SogLOOhgmYM8wEjW0w
+}

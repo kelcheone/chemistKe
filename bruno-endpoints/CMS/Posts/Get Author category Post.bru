@@ -1,0 +1,20 @@
+meta {
+  name: Get Author category Post
+  type: http
+  seq: 8
+}
+
+get {
+  url: http://localhost:9090/api/v1/cms/posts/get-by-author-category
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "author_id": "152c4e72-a4e4-4a4f-84e8-d9ab2dac1dd7",
+    "category_id": "c76b0ac2-55de-4364-a3b2-41aa74c5119b",
+    "page": 0,
+    "limit": 10
+  }
+}

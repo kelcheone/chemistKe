@@ -1,0 +1,24 @@
+meta {
+  name: Update Author
+  type: http
+  seq: 5
+}
+
+patch {
+  url: http://localhost:9090/api/v1/cms/authors
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZG1pbiI6dHJ1ZSwiYXV0aG9yIjpmYWxzZSwiZXhwIjoxNzMyMjY2MzcwLCJpZCI6IjFiZjQ0N2I4LWExMjktNDJhMi1iMTFlLTY4NGE4MDE1NjhmZiIsIm5hbWUiOiJrZXZpbiBDaGVydWl5b3QifQ.oz8scnyuFmjJDSTDV3I33jXC7SogLOOhgmYM8wEjW0w
+}
+
+body:json {
+  {
+    "id": "b2310431-46ef-4bb1-aa02-c0926ee07183",
+    "bio": "Medicine is my life",
+    "avatar":"https://i.pravatar.cc/300",
+    "user_id": "d423b7e8-123a-4ce2-bb0b-ac50581955d1"
+  }
+}

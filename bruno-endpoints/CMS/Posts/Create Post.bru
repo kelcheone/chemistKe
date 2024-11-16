@@ -1,0 +1,30 @@
+meta {
+  name: Create Post
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:9090/api/v1/cms/posts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{Token}}
+}
+
+body:json {
+  {
+    "published_date": "2024-11-12T09:00:00Z",
+    "updated_date": "2024-11-12T09:00:00Z",
+    "cover_image": "https://example.com/images/crypto-future.jpg",
+    "title": "The Future of Cryptocurrency",
+    "description": "Analyzing trends and predictions in the cryptocurrency market",
+    "slug": "future-of-cryptocurrency",
+    "content": "The cryptocurrency landscape continues to evolve rapidly...",
+    "status": "published",
+    "author_id": "c2d6a04d-a45a-40b6-b584-8025c70e6452",
+    "category_id": "50582f28-98bb-4b34-b1e7-258a62ebd9f1"
+  }
+}

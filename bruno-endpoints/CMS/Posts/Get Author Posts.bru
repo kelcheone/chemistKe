@@ -1,0 +1,19 @@
+meta {
+  name: Get Author Posts
+  type: http
+  seq: 6
+}
+
+get {
+  url: http://localhost:9090/api/v1/cms/posts/author
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "author_id":"152c4e72-a4e4-4a4f-84e8-d9ab2dac1dd7",
+    "page":0,
+    "limit":10
+  }
+}

@@ -1,0 +1,31 @@
+meta {
+  name: Update Post
+  type: http
+  seq: 2
+}
+
+patch {
+  url: http://localhost:9090/api/v1/cms/posts
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{Token}}
+}
+
+body:json {
+  {
+    "id":"320f6027-0a84-4097-ad9e-8ef2661ad5ef",
+    "published_date": "2024-11-15T10:30:00Z",
+    "updated_date": "2024-11-16T10:30:00Z",
+    "cover_image": "https://example.com/images/tech-trends-2024.jpg",
+    "title": "Top Tech Trends for 2024",
+    "description": "An in-depth look at the emerging technology trends that will shape the future",
+    "slug": "top-tech-trends-2024",
+    "content": "In this article, we explore the revolutionary changes in technology...",
+    "status": "draft",
+    "author_id": "152c4e72-a4e4-4a4f-84e8-d9ab2dac1dd7",
+    "category_id": "c76b0ac2-55de-4364-a3b2-41aa74c5119b"
+  }
+}
