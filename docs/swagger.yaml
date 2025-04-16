@@ -1,0 +1,356 @@
+basePath: /api/v1
+definitions:
+  authservice.ErrResponse:
+    properties:
+      message:
+        description: Error message
+        example: invalid credentials
+        type: string
+    type: object
+  authservice.LoginRequest:
+    properties:
+      id:
+        description: User ID
+        example: 1bf447b8-a129-42a2-b11e-684a801568ff
+        type: string
+      password:
+        description: User password
+        example: securepassword123
+        type: string
+    type: object
+  authservice.LoginResponse:
+    properties:
+      token:
+        description: JWT authentication token
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  routes.DeleteUserResponse:
+    properties:
+      message:
+        example: User deleted successfully
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  routes.ErrResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  routes.GetUserResponse:
+    properties:
+      email:
+        example: jane.doe@example.com
+        type: string
+      id:
+        example: cef6ad-1b39-4708-aa3f-a0c485f70db3
+        type: string
+      name:
+        example: Jane Doe
+        type: string
+      phone:
+        example: "+254722000000"
+        type: string
+      role:
+        example: USER
+        type: string
+    type: object
+  routes.HTTPError:
+    properties:
+      error:
+        type: string
+    type: object
+  routes.User:
+    properties:
+      email:
+        example: jane.doe@example.com
+        type: string
+      id:
+        example: 42cef6ad-1b39-4708-aa3f-a0c485f70db3
+        type: string
+      name:
+        example: Jane Doe
+        type: string
+      password:
+        example: "12345"
+        type: string
+      phone:
+        example: "+254722000000"
+        type: string
+      role:
+        example: USER
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - phone
+    type: object
+host: localhost:9090
+info:
+  contact:
+    email: Support@chemist.co.ke
+    name: ChemistKe Support
+    url: https://chemist.co.ke/support
+  description: API endpoint documentation for the ChemistKe api project.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: ChemistKe API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT token
+      parameters:
+      - description: User credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authservice.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Successfully authenticated
+          schema:
+            $ref: '#/definitions/authservice.LoginResponse'
+        "400":
+          description: Bad request - invalid input
+          schema:
+            $ref: '#/definitions/authservice.ErrResponse'
+        "401":
+          description: Unauthorized - invalid credentials
+          schema:
+            $ref: '#/definitions/authservice.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/authservice.ErrResponse'
+      summary: User login
+      tags:
+      - Authentication
+  /users:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing user
+      parameters:
+      - description: User ID to delete
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/routes.User'
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Successfully deleted user
+          schema:
+            $ref: '#/definitions/routes.DeleteUserResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      summary: Delete a user
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all users
+      parameters:
+      - description: GetUsersRequest Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: GetUsersRequest Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved users
+          schema:
+            items:
+              $ref: '#/definitions/routes.GetUserResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Get all users
+      tags:
+      - Users
+    patch:
+      consumes:
+      - application/json
+      description: Update existing user information
+      parameters:
+      - description: Updated user information
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/routes.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.GetUserResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - ApiKeyAuth: []
+      - BearerAuth: []
+      summary: Update user details
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Register a new user to the system
+      parameters:
+      - description: User information to create
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/routes.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully created user
+          schema:
+            $ref: '#/definitions/routes.GetUserResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Create a new user
+      tags:
+      - Users
+  /users/get-user:
+    get:
+      consumes:
+      - application/json
+      description: Get user details by user ID
+      parameters:
+      - description: User ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved user
+          schema:
+            $ref: '#/definitions/routes.GetUserResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Get a user by ID
+      tags:
+      - Users
+  /users/get-user-by-email:
+    get:
+      consumes:
+      - application/json
+      description: Get user details by email address
+      parameters:
+      - description: User Email
+        in: query
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved user
+          schema:
+            $ref: '#/definitions/routes.GetUserResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Get a user by email
+      tags:
+      - Users
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: 'JWT Authorization header using the Bearer scheme. Example: "Authorization:
+      Bearer {token}"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
