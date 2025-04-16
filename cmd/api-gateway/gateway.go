@@ -4,11 +4,13 @@ import (
 	"log"
 
 	authservice "github.com/kelcheone/chemistke/cmd/api-gateway/auth"
-	"github.com/kelcheone/chemistke/cmd/api-gateway/routes"
+	routes "github.com/kelcheone/chemistke/cmd/api-gateway/routes"
 	"github.com/kelcheone/chemistke/cmd/utils"
+	_ "github.com/kelcheone/chemistke/docs"
 	user_proto "github.com/kelcheone/chemistke/pkg/grpc/user"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 type Server struct {
@@ -20,6 +22,27 @@ func NewServer(userClient user_proto.UserServiceClient) *Server {
 		userClient: userClient,
 	}
 }
+
+// @title ChemistKe API
+// @version 1.0
+// @description API endpoint documentation for the ChemistKe api project.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name ChemistKe Support
+// @contact.url https://chemist.co.ke/support
+// @contact.email Support@chemist.co.ke
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:9090
+// @BasePath /api/v1
+// @schemes http
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"
 
 func main() {
 	userServer, CloseUserConn, err := routes.ConnectUserServer("localhost:8090")
@@ -57,6 +80,8 @@ func main() {
 	e := echo.New()
 
 	e.Use(middleware.Logger())
+
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	v1 := e.Group("/api/v1")
 
