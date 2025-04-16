@@ -3,7 +3,9 @@ package routes
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,31 +16,41 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// User represents the data needed to create a suser
 type User struct {
-	Id       string `json:"id"`
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Phone    string `json:"phone"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
+	Id       string `json:"id"       example:"42cef6ad-1b39-4708-aa3f-a0c485f70db3"`
+	Name     string `json:"name"     example:"Jane Doe"                             binding:"required"`
+	Email    string `json:"email"    example:"jane.doe@example.com"                 binding:"required"`
+	Phone    string `json:"phone"    example:"+254722000000"                        binding:"required"`
+	Password string `json:"password" example:"12345"                                binding:"required"`
+	Role     string `json:"role"     example:"USER"`
 }
 
+// GetUserResponse represents the user data returned by the endpoint
 type GetUserResponse struct {
-	Id    string `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Phone string `json:"phone"`
-	Role  string `json:"role"`
+	Id    string `json:"id"    example:"cef6ad-1b39-4708-aa3f-a0c485f70db3"`
+	Name  string `json:"name"  example:"Jane Doe"`
+	Email string `json:"email" example:"jane.doe@example.com"`
+	Phone string `json:"phone" example:"+254722000000"`
+	Role  string `json:"role"  example:"USER"`
 }
 
+// HTTPError represents an error response
+type HTTPError struct {
+	Message string `json:"error"`
+}
+
+// ErrResponse represents an error response
 type ErrResponse struct {
 	Message string `json:"error"`
 }
 
+// UserServer handles user-related API endpoints
 type UserServer struct {
 	UserClient user_proto.UserServiceClient
 }
 
+// ConnectUserServer creates a connection to the user gRPC service
 func ConnectUserServer(link string) (*UserServer, func(), error) {
 	userConn, err := grpc.NewClient(
 		link,
@@ -58,6 +70,17 @@ func ConnectUserServer(link string) (*UserServer, func(), error) {
 		}, nil
 }
 
+// CreateUser godoc
+// @Summary Create a new user
+// @Description Register a new user to the system
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param user body User true "User information to create"
+// @Success 201 {object} GetUserResponse "Successfully created user"
+// @Failure 400 {object} HTTPError "Invalid input data"
+// @Failure 500 {object} HTTPError "Internal server error"
+// @Router /users [post]
 func (s *UserServer) CreateUser(c echo.Context) error {
 	var user User
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -98,18 +121,30 @@ func (s *UserServer) CreateUser(c echo.Context) error {
 	return c.JSON(http.StatusCreated, res)
 }
 
+// GetUser godoc
+// @Summary Get a user by ID
+// @Description Get user details by user ID
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param id query string true "User ID"
+// @Success 200 {object} GetUserResponse "Successfully retrieved user"
+// @Failure 400 {object} HTTPError "Invalid input data"
+// @Failure 404 {object} HTTPError "User not found"
+// @Failure 500 {object} HTTPError "Internal server error"
+// @Router /users/get-user [get]
 func (s *UserServer) GetUser(c echo.Context) error {
-	var user User
-
-	if err := c.Bind(&user); err != nil {
+	// Get the ID from query parameters instead of binding JSON
+	id := c.QueryParam("id")
+	if id == "" {
 		return c.JSON(http.StatusBadRequest, ErrResponse{
-			Message: err.Error(),
+			Message: "missing user ID",
 		})
 	}
 
 	userReq := user_proto.GetUserRequest{
 		Id: &user_proto.UUID{
-			Value: user.Id,
+			Value: id,
 		},
 	}
 
@@ -130,17 +165,27 @@ func (s *UserServer) GetUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// GetUserByEmail godoc
+// @Summary Get a user by email
+// @Description Get user details by email address
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param email query string true "User Email"
+// @Success 200 {object} GetUserResponse "Successfully retrieved user"
+// @Failure 400 {object} HTTPError "Invalid input data"
+// @Failure 404 {object} HTTPError "User not found"
+// @Failure 500 {object} HTTPError "Internal server error"
+// @Router /users/get-user-by-email [get]
 func (s *UserServer) GetUserByEmail(c echo.Context) error {
-	var user User
-
-	if err := c.Bind(&user); err != nil {
+	email := c.QueryParam("email")
+	if email == "" {
 		return c.JSON(http.StatusBadRequest, ErrResponse{
-			Message: err.Error(),
+			Message: "bad email request",
 		})
 	}
-
 	userReq := user_proto.GetUserByEmailRequest{
-		Email: user.Email,
+		Email: email,
 	}
 
 	gUser, err := s.UserClient.GetUserByEmail(context.TODO(), &userReq)
@@ -160,6 +205,21 @@ func (s *UserServer) GetUserByEmail(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// UpdateUser godoc
+// @Summary Update user details
+// @Description Update existing user information
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param user body User true "Updated user information"
+// @Security ApiKeyAuth
+// @Success 200 {object} GetUserResponse "Successfully updated user"
+// @Failure 400 {object} HTTPError "Invalid input data"
+// @Failure 401 {object} HTTPError "Unauthorized"
+// @Failure 404 {object} HTTPError "User not found"
+// @Failure 500 {object} HTTPError "Internal server error"
+// @Security BearerAuth
+// @Router /users [patch]
 func (s *UserServer) UpdateUser(c echo.Context) error {
 	var user User
 
@@ -170,6 +230,7 @@ func (s *UserServer) UpdateUser(c echo.Context) error {
 	}
 
 	userClaims := utils.ExtractClaimsFromRequest(c)
+	log.Printf("UserId %v vs Claims UserId %v", user.Id, userClaims.Id)
 	if userClaims.Id != user.Id {
 		return c.JSON(
 			http.StatusUnauthorized,
@@ -207,6 +268,26 @@ func (s *UserServer) UpdateUser(c echo.Context) error {
 	return c.JSON(http.StatusNoContent, resp)
 }
 
+// DeleteUserResponse represents the response from the delete user operation
+type DeleteUserResponse struct {
+	Success bool   `json:"success"           example:"true"`
+	Message string `json:"message,omitempty" example:"User deleted successfully"`
+}
+
+// DeleteUser godoc
+// @Summary Delete a user
+// @Description Delete an existing user
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param user body User true "User ID to delete"
+// @Security ApiKeyAuth
+// @Success 202 {object} DeleteUserResponse "Successfully deleted user"
+// @Failure 400 {object} ErrResponse "Invalid input data"
+// @Failure 401 {object} ErrResponse "Unauthorized"
+// @Failure 500 {object} ErrResponse "Internal server error"
+// @Security BearerAuth
+// @Router /users [delete]
 func (s *UserServer) DeleteUser(c echo.Context) error {
 	var user User
 
@@ -236,19 +317,48 @@ func (s *UserServer) DeleteUser(c echo.Context) error {
 	return c.JSON(http.StatusAccepted, resp)
 }
 
+// GetUsersRequest represents the pagination request
+type GetUsersRequest struct {
+	Page  int `json:"page"  example:"1"`
+	Limit int `json:"limit" example:"50"`
+}
+
+// GetUsers godoc
+// @Summary Get all users
+// @Description Get a list of all users
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param page query int true "GetUsersRequest Page"
+// @Param limit query int tru "GetUsersRequest Limit"
+// @Success 200 {array} GetUserResponse "Successfully retrieved users"
+// @Failure 401 {object} HTTPError "Unauthorized"
+// @Failure 500 {object} HTTPError "Internal server error"
+// @Security BearerAuth
+// @Router /users [get]
 func (s *UserServer) GetUsers(c echo.Context) error {
-	type reqType struct {
-		Page  int
-		Limit int
-	}
+	var req GetUsersRequest
 
-	var req reqType
+	page := c.QueryParam("page")
 
-	if err := c.Bind(&req); err != nil {
+	n_page, err := strconv.Atoi(page)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrResponse{
 			Message: "invalid request",
 		})
 	}
+	req.Page = n_page
+
+	limit := c.QueryParam("limit")
+
+	n_limit, err := strconv.Atoi(limit)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+
+	req.Limit = n_limit
 
 	resp, err := s.UserClient.GetUsers(
 		context.TODO(),
