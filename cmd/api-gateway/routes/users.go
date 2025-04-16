@@ -317,8 +317,8 @@ func (s *UserServer) DeleteUser(c echo.Context) error {
 	return c.JSON(http.StatusAccepted, resp)
 }
 
-// GetUsersRequest represents the pagination request
-type GetUsersRequest struct {
+// PaginationRequest represents the pagination request
+type PaginationRequest struct {
 	Page  int `json:"page"  example:"1"`
 	Limit int `json:"limit" example:"50"`
 }
@@ -329,15 +329,15 @@ type GetUsersRequest struct {
 // @Tags Users
 // @Accept json
 // @Produce json
-// @Param page query int true "GetUsersRequest Page"
-// @Param limit query int tru "GetUsersRequest Limit"
+// @Param page query int true "PaginationRequest Page"
+// @Param limit query int tru "PaginationRequest Limit"
 // @Success 200 {array} GetUserResponse "Successfully retrieved users"
 // @Failure 401 {object} HTTPError "Unauthorized"
 // @Failure 500 {object} HTTPError "Internal server error"
 // @Security BearerAuth
 // @Router /users [get]
 func (s *UserServer) GetUsers(c echo.Context) error {
-	var req GetUsersRequest
+	var req PaginationRequest
 
 	page := c.QueryParam("page")
 

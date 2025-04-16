@@ -25,6 +25,11 @@ definitions:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
     type: object
+  product_proto.UploadProdctImagesResponse:
+    properties:
+      message:
+        type: string
+    type: object
   routes.DeleteUserResponse:
     properties:
       message:
@@ -61,6 +66,41 @@ definitions:
     properties:
       error:
         type: string
+    type: object
+  routes.Product:
+    properties:
+      brand:
+        example: J&J
+        type: string
+      category:
+        example: Antibiotics
+        type: string
+      description:
+        example: product description
+        type: string
+      id:
+        example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
+        type: string
+      name:
+        example: Amoxilin
+        type: string
+      price:
+        example: 300
+        type: number
+      quantity:
+        example: 1000
+        type: integer
+      sub-category:
+        example: Mild
+        type: string
+    required:
+    - brand
+    - category
+    - description
+    - name
+    - price
+    - quantity
+    - sub-category
     type: object
   routes.User:
     properties:
@@ -136,6 +176,343 @@ paths:
       summary: User login
       tags:
       - Authentication
+  /products:
+    get:
+      consumes:
+      - application/json
+      description: Get products based on page and limit
+      parameters:
+      - description: PaginationRequest Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: PaginationRequest Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Get products
+      tags:
+      - Products
+    patch:
+      consumes:
+      - application/json
+      description: update a given product
+      parameters:
+      - description: Product information to create
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Product'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Update a  product
+      tags:
+      - Products
+    post:
+      consumes:
+      - application/json
+      description: Create a new product
+      parameters:
+      - description: Product information to create
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Product'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Creates a new Product
+      tags:
+      - Products
+  /products/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a product based on a given id
+      parameters:
+      - description: Product id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Delete a product
+      tags:
+      - Products
+    get:
+      consumes:
+      - application/json
+      description: Get a product by product ID
+      parameters:
+      - description: Product Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Get product by ID
+      tags:
+      - Products
+  /products/get-products-by-brand:
+    get:
+      consumes:
+      - application/json
+      description: Get products based on a given brand name
+      parameters:
+      - description: ProductReq Brand
+        in: query
+        name: brand
+        required: true
+        type: string
+      - description: ProductReq Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: ProductReq Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Get products based on brand
+      tags:
+      - Products
+  /products/get-products-by-category:
+    get:
+      consumes:
+      - application/json
+      description: Get products based on a givne Category
+      parameters:
+      - description: ProductReq Category
+        in: query
+        name: category
+        required: true
+        type: string
+      - description: ProductReq Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: ProductReq Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Get products Based on a category
+      tags:
+      - Products
+  /products/get-products-by-sub-category:
+    get:
+      consumes:
+      - application/json
+      description: Get products based on a given sub-category, page, and limit
+      parameters:
+      - description: ProductReq SubCategory
+        in: query
+        name: sub-category
+        required: true
+        type: string
+      - description: ProductReq Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: ProductReq Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Get products based on a sub-category
+      tags:
+      - Products
+  /products/images/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get the images of a given product id
+      parameters:
+      - description: Product id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: a product's images
+      tags:
+      - Products
+  /products/images/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload an image for a given product using multipart/form-data.
+      parameters:
+      - description: Product ID
+        in: formData
+        name: product-id
+        required: true
+        type: string
+      - description: Type of the image (e.g. thumbnail, banner, general)
+        in: formData
+        name: image-type
+        type: string
+      - description: Image file to upload
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully uploaded image
+          schema:
+            $ref: '#/definitions/product_proto.UploadProdctImagesResponse'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Upload a product image
+      tags:
+      - Products
   /users:
     delete:
       consumes:
@@ -178,12 +555,12 @@ paths:
       - application/json
       description: Get a list of all users
       parameters:
-      - description: GetUsersRequest Page
+      - description: PaginationRequest Page
         in: query
         name: page
         required: true
         type: integer
-      - description: GetUsersRequest Limit
+      - description: PaginationRequest Limit
         in: query
         name: limit
         type: integer
