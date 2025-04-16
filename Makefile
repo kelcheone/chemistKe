@@ -133,3 +133,8 @@ db-status:
 # Format the proto files using buf format command pipe the result to the specific file
 pfmt:
 	buf format  $(PROTO_DIR)  -w
+
+
+run-client:
+	swag init -g cmd/api-gateway/gateway.go --parseDependency --output ./docs 
+	go run cmd/api-gateway/gateway.go
