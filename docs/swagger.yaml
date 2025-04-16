@@ -67,6 +67,32 @@ definitions:
       error:
         type: string
     type: object
+  routes.Order:
+    properties:
+      id:
+        example: 62e9e179-3aaa-4dd5-a098-21f20da10f90
+        type: string
+      product_id:
+        example: 62e9e179-3aaa-4dd5-a098-21f20da10f90
+        type: string
+      quantity:
+        example: 10
+        type: integer
+      status:
+        example: pending
+        type: string
+      total:
+        example: 100
+        type: number
+      user_id:
+        example: 62e9e179-3aaa-4dd5-a098-21f20da10f90
+        type: string
+    required:
+    - product_id
+    - quantity
+    - total
+    - user_id
+    type: object
   routes.Product:
     properties:
       brand:
@@ -176,6 +202,206 @@ paths:
       summary: User login
       tags:
       - Authentication
+  /orders:
+    get:
+      consumes:
+      - application/json
+      description: Get orders
+      parameters:
+      - description: PaginatedReq Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: PaginatedReq limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfly fetched orders
+          schema:
+            type: Object
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Get  orders
+      tags:
+      - Orders
+    patch:
+      consumes:
+      - application/json
+      description: update an order.
+      parameters:
+      - description: Oder info to create
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Order'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Oder Successfly updated
+          schema:
+            type: Object
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: update a given order
+      tags:
+      - Orders
+    post:
+      consumes:
+      - application/json
+      description: create a new order.
+      parameters:
+      - description: Oder info to create
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Order'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfly created a product
+          schema:
+            type: Object
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: create an order in the system
+      tags:
+      - Orders
+  /orders/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete order by id
+      parameters:
+      - description: Order Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfly deleted order
+          schema:
+            type: Object
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Delete order
+      tags:
+      - Orders
+    get:
+      consumes:
+      - application/json
+      description: Get order by id
+      parameters:
+      - description: Oder ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfly fetched order
+          schema:
+            type: Object
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Get an order by id
+      tags:
+      - Orders
+  /orders/user:
+    get:
+      consumes:
+      - application/json
+      description: Get orders for a given user
+      parameters:
+      - description: User ID
+        in: query
+        name: id
+        required: true
+        type: string
+      - description: PaginatedReq Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: PaginatedReq limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfly fetched user orders
+          schema:
+            type: Object
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Get a users' orders
+      tags:
+      - Orders
   /products:
     get:
       consumes:
@@ -255,7 +481,7 @@ paths:
       - application/json
       responses:
         "201":
-          description: Successfully updated user
+          description: Successfully updated product
           schema:
             $ref: '#/definitions/routes.Product'
         "400":
@@ -387,6 +613,7 @@ paths:
       - description: ProductReq Limit
         in: query
         name: limit
+        required: true
         type: integer
       produces:
       - application/json
@@ -470,7 +697,7 @@ paths:
           description: Internal server error
           schema:
             $ref: '#/definitions/routes.HTTPError'
-      summary: a product's images
+      summary: get a product's images
       tags:
       - Products
   /products/images/upload:
