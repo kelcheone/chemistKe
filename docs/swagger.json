@@ -553,6 +553,427 @@
                 }
             }
         },
+        "/cms/posts": {
+            "get": {
+                "description": "lists all posts in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "lists all Posts.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page Number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit of Items to fetch",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fetched Posts Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new Post in the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "Registers a new post.",
+                "parameters": [
+                    {
+                        "description": "Post to create",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/routes.Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Post created Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Post"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates a given post.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "updates a post.",
+                "parameters": [
+                    {
+                        "description": "Post to create",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/routes.Post"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Post updated Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Post"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/posts/author": {
+            "get": {
+                "description": "lists all posts of an author in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "lists all Posts for a specific author.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Author ID",
+                        "name": "author_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page Number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit of Items to fetch",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fetched Posts Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/posts/category": {
+            "get": {
+                "description": "lists all posts of a category in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "lists all Posts for a specific category.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page Number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit of Items to fetch",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fetched Posts Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/posts/get-by-author-category": {
+            "get": {
+                "description": "lists all posts of an author in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "lists all Posts for a specific author.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Author ID",
+                        "name": "author_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "category_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page Number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit of Items to fetch",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fetched Posts Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/posts/{id}": {
+            "get": {
+                "description": "Gets a post from the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "Gets a Post.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Post fetched Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Post"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletets a post from the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "Deletets a Post.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Post deleted Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Post"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
         "/orders": {
             "get": {
                 "security": [
@@ -1893,6 +2314,64 @@
                 "user_id": {
                     "type": "string",
                     "example": "62e9e179-3aaa-4dd5-a098-21f20da10f90"
+                }
+            }
+        },
+        "routes.Post": {
+            "type": "object",
+            "required": [
+                "author_id",
+                "category_id",
+                "content",
+                "description",
+                "slug",
+                "status",
+                "title"
+            ],
+            "properties": {
+                "author_id": {
+                    "type": "string",
+                    "example": "42cef6ad-1b39-4708-aa3f-a0c485f70db3"
+                },
+                "category_id": {
+                    "type": "string",
+                    "example": "42cef6ad-1b39-4708-aa3f-a0c485f70db3"
+                },
+                "content": {
+                    "type": "string",
+                    "example": "lorem ipsum"
+                },
+                "cover_image": {
+                    "type": "string",
+                    "example": "https://example.com/images/crypto-future.jpg"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "10 benefits of ozempic"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "1bf447b8-a129-42a2-b11e-684a801568ff"
+                },
+                "published_date": {
+                    "type": "string",
+                    "example": "2024-11-16 10:30:00"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "why-ozempic-is-good-for-you"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "draft"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Why ozempic is good for you."
+                },
+                "updated_date": {
+                    "type": "string",
+                    "example": "2024-11-16 10:30:00"
                 }
             }
         },

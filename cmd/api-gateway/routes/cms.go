@@ -539,6 +539,18 @@ func (s *CmsServer) ListCategories(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// CreatePost godoc
+// @Summary Registers a new post.
+// @Description Creates a new Post in the system.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param post body Post true "Post to create"
+// @Success 201 {object} Post "Post created Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Security BearerAuth
+// @Router /cms/posts [post]
 func (s *CmsServer) CreatePost(c echo.Context) error {
 	claims := utils.ExtractClaimsFromRequest(c)
 	if !claims.Admin && !claims.Author {
@@ -580,6 +592,17 @@ func (s *CmsServer) CreatePost(c echo.Context) error {
 	return c.JSON(http.StatusCreated, resp)
 }
 
+// GetPost godoc
+// @Summary Gets a Post.
+// @Description Gets a post from the system.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param id path string true "Post Id"
+// @Success 200 {object} Post "Post fetched Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Router /cms/posts/{id} [get]
 func (s *CmsServer) GetPost(c echo.Context) error {
 	id := c.Param("id")
 
@@ -604,6 +627,18 @@ func (s *CmsServer) GetPost(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// CreatePost godoc
+// @Summary updates a post.
+// @Description Updates a given post.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param post body Post true "Post to create"
+// @Success 201 {object} Post "Post updated Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Security BearerAuth
+// @Router /cms/posts [patch]
 func (s *CmsServer) UpdatePost(c echo.Context) error {
 	claims := utils.ExtractClaimsFromRequest(c)
 	if !claims.Admin && !claims.Author {
@@ -652,6 +687,18 @@ func (s *CmsServer) UpdatePost(c echo.Context) error {
 	return c.JSON(http.StatusNoContent, resp)
 }
 
+// DeletePost godoc
+// @Summary Deletets a Post.
+// @Description Deletets a post from the system.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param id path string true "Post Id"
+// @Success 200 {object} Post "Post deleted Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Security BearerAuth
+// @Router /cms/posts/{id} [delete]
 func (s *CmsServer) DeletePost(c echo.Context) error {
 	claims := utils.ExtractClaimsFromRequest(c)
 	if !claims.Admin && !claims.Author {
@@ -681,18 +728,43 @@ func (s *CmsServer) DeletePost(c echo.Context) error {
 	return c.JSON(http.StatusNoContent, resp)
 }
 
+// ListPosts godoc
+// @Summary lists all Posts.
+// @Description lists all posts in the system
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param page query int true "Page Number"
+// @Param limit query int true "Limit of Items to fetch"
+// @Success 200 {object} Author "Fetched Posts Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Router /cms/posts [get]
 func (s *CmsServer) ListPosts(c echo.Context) error {
-	var req PaginatedReq
+	page := c.QueryParam("page")
 
-	if err := c.Bind(&req); err != nil {
+	int_page, err := strconv.Atoi(page)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrResponse{
-			Message: "invalid reqest",
+			Message: "invalid request",
+		})
+	}
+
+	limit := c.QueryParam("limit")
+
+	int_limit, err := strconv.Atoi(limit)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
 		})
 	}
 
 	resp, err := s.CmsClient.ListPosts(
 		c.Request().Context(),
-		&cms_proto.ListPostsRequest{Page: req.Page, PerPage: req.Limit},
+		&cms_proto.ListPostsRequest{
+			Page:    int32(int_page),
+			PerPage: int32(int_limit),
+		},
 	)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, ErrResponse{
@@ -709,10 +781,40 @@ type PaginatedPostCategories struct {
 	Page       int32  `json:"page"`
 }
 
+// GetCategoryPosts godoc
+// @Summary lists all Posts for a specific category.
+// @Description lists all posts of a category in the system
+// @Tags Content
+// @Accept json
+// @Produce json
+// @param category_id query string true "Category ID"
+// @Param page query int true "Page Number"
+// @Param limit query int true "Limit of Items to fetch"
+// @Success 200 {object} Author "Fetched Posts Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Router /cms/posts/category [get]
 func (s *CmsServer) GetCategoryPosts(c echo.Context) error {
-	var req PaginatedPostCategories
+	categoryId := c.QueryParam("category_id")
+	if categoryId == "" {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
 
-	if err := c.Bind(&req); err != nil {
+	page := c.QueryParam("page")
+
+	int_page, err := strconv.Atoi(page)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+
+	limit := c.QueryParam("limit")
+
+	int_limit, err := strconv.Atoi(limit)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrResponse{
 			Message: "invalid request",
 		})
@@ -721,9 +823,9 @@ func (s *CmsServer) GetCategoryPosts(c echo.Context) error {
 	resp, err := s.CmsClient.GetCategoryPosts(
 		c.Request().Context(),
 		&cms_proto.GetCategoryPostsRequest{
-			CategoryId: &cms_proto.UUID{Value: req.CategoryID},
-			Page:       req.Page,
-			PerPage:    req.Limit,
+			CategoryId: &cms_proto.UUID{Value: categoryId},
+			Page:       int32(int_page),
+			PerPage:    int32(int_limit),
 		},
 	)
 	if err != nil {
@@ -741,9 +843,40 @@ type PaginatedAuthorPosts struct {
 	Page     int32  `json:"page"`
 }
 
+// GetAuthorPosts godoc
+// @Summary lists all Posts for a specific author.
+// @Description lists all posts of an author in the system
+// @Tags Content
+// @Accept json
+// @Produce json
+// @param author_id query string true "Author ID"
+// @Param page query int true "Page Number"
+// @Param limit query int true "Limit of Items to fetch"
+// @Success 200 {object} Author "Fetched Posts Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Router /cms/posts/author [get]
 func (s *CmsServer) GetAuthorPosts(c echo.Context) error {
-	var req PaginatedAuthorPosts
-	if err := c.Bind(&req); err != nil {
+	authorId := c.QueryParam("author_id")
+	if authorId == "" {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+
+	page := c.QueryParam("page")
+
+	int_page, err := strconv.Atoi(page)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+
+	limit := c.QueryParam("limit")
+
+	int_limit, err := strconv.Atoi(limit)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrResponse{
 			Message: "invalid request",
 		})
@@ -752,9 +885,9 @@ func (s *CmsServer) GetAuthorPosts(c echo.Context) error {
 	resp, err := s.CmsClient.GetAuthorPosts(
 		c.Request().Context(),
 		&cms_proto.GetAuthorPostsRequest{
-			AuthorId: &cms_proto.UUID{Value: req.AuthorId},
-			Page:     req.Page,
-			PerPage:  req.Limit,
+			AuthorId: &cms_proto.UUID{Value: authorId},
+			Page:     int32(int_page),
+			PerPage:  int32(int_limit),
 		},
 	)
 	if err != nil {
@@ -773,9 +906,47 @@ type PaginatedAuthorCategoryPosts struct {
 	Page       int32  `json:"page"`
 }
 
+// GetAuthorPosts godoc
+// @Summary lists all Posts for a specific author.
+// @Description lists all posts of an author in the system
+// @Tags Content
+// @Accept json
+// @Produce json
+// @param author_id query string true "Author ID"
+// @param category_id query string true "Category ID"
+// @Param page query int true "Page Number"
+// @Param limit query int true "Limit of Items to fetch"
+// @Success 200 {object} Author "Fetched Posts Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Router /cms/posts/get-by-author-category [get]
 func (s *CmsServer) GetAuthorCategoryPosts(c echo.Context) error {
-	var req PaginatedAuthorCategoryPosts
-	if err := c.Bind(&req); err != nil {
+	authorId := c.QueryParam("author_id")
+	if authorId == "" {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+
+	categoryId := c.QueryParam("category_id")
+	if categoryId == "" {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+	page := c.QueryParam("page")
+
+	int_page, err := strconv.Atoi(page)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+
+	limit := c.QueryParam("limit")
+
+	int_limit, err := strconv.Atoi(limit)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrResponse{
 			Message: "invalid request",
 		})
@@ -784,10 +955,10 @@ func (s *CmsServer) GetAuthorCategoryPosts(c echo.Context) error {
 	resp, err := s.CmsClient.GetAuthorCategoryPosts(
 		c.Request().Context(),
 		&cms_proto.GetAuthorCategoryPostsRequest{
-			AuthorId:   &cms_proto.UUID{Value: req.AuthorId},
-			CategoryId: &cms_proto.UUID{Value: req.CategoryID},
-			Page:       req.Page,
-			PerPage:    req.Limit,
+			AuthorId:   &cms_proto.UUID{Value: authorId},
+			CategoryId: &cms_proto.UUID{Value: categoryId},
+			Page:       int32(int_page),
+			PerPage:    int32(int_limit),
 		},
 	)
 	if err != nil {

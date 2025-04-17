@@ -133,6 +133,50 @@ definitions:
     - total
     - user_id
     type: object
+  routes.Post:
+    properties:
+      author_id:
+        example: 42cef6ad-1b39-4708-aa3f-a0c485f70db3
+        type: string
+      category_id:
+        example: 42cef6ad-1b39-4708-aa3f-a0c485f70db3
+        type: string
+      content:
+        example: lorem ipsum
+        type: string
+      cover_image:
+        example: https://example.com/images/crypto-future.jpg
+        type: string
+      description:
+        example: 10 benefits of ozempic
+        type: string
+      id:
+        example: 1bf447b8-a129-42a2-b11e-684a801568ff
+        type: string
+      published_date:
+        example: "2024-11-16 10:30:00"
+        type: string
+      slug:
+        example: why-ozempic-is-good-for-you
+        type: string
+      status:
+        example: draft
+        type: string
+      title:
+        example: Why ozempic is good for you.
+        type: string
+      updated_date:
+        example: "2024-11-16 10:30:00"
+        type: string
+    required:
+    - author_id
+    - category_id
+    - content
+    - description
+    - slug
+    - status
+    - title
+    type: object
   routes.Product:
     properties:
       brand:
@@ -550,6 +594,283 @@ paths:
           schema:
             $ref: '#/definitions/routes.HTTPError'
       summary: Gets a cateogory.
+      tags:
+      - Content
+  /cms/posts:
+    get:
+      consumes:
+      - application/json
+      description: lists all posts in the system
+      parameters:
+      - description: Page Number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Limit of Items to fetch
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Fetched Posts Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Author'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: lists all Posts.
+      tags:
+      - Content
+    patch:
+      consumes:
+      - application/json
+      description: Updates a given post.
+      parameters:
+      - description: Post to create
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Post'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Post updated Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Post'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: updates a post.
+      tags:
+      - Content
+    post:
+      consumes:
+      - application/json
+      description: Creates a new Post in the system.
+      parameters:
+      - description: Post to create
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Post'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Post created Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Post'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Registers a new post.
+      tags:
+      - Content
+  /cms/posts/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletets a post from the system.
+      parameters:
+      - description: Post Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Post deleted Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Post'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Deletets a Post.
+      tags:
+      - Content
+    get:
+      consumes:
+      - application/json
+      description: Gets a post from the system.
+      parameters:
+      - description: Post Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Post fetched Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Post'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Gets a Post.
+      tags:
+      - Content
+  /cms/posts/author:
+    get:
+      consumes:
+      - application/json
+      description: lists all posts of an author in the system
+      parameters:
+      - description: Author ID
+        in: query
+        name: author_id
+        required: true
+        type: string
+      - description: Page Number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Limit of Items to fetch
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Fetched Posts Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Author'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: lists all Posts for a specific author.
+      tags:
+      - Content
+  /cms/posts/category:
+    get:
+      consumes:
+      - application/json
+      description: lists all posts of a category in the system
+      parameters:
+      - description: Category ID
+        in: query
+        name: category_id
+        required: true
+        type: string
+      - description: Page Number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Limit of Items to fetch
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Fetched Posts Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Author'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: lists all Posts for a specific category.
+      tags:
+      - Content
+  /cms/posts/get-by-author-category:
+    get:
+      consumes:
+      - application/json
+      description: lists all posts of an author in the system
+      parameters:
+      - description: Author ID
+        in: query
+        name: author_id
+        required: true
+        type: string
+      - description: Category ID
+        in: query
+        name: category_id
+        required: true
+        type: string
+      - description: Page Number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Limit of Items to fetch
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Fetched Posts Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Author'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: lists all Posts for a specific author.
       tags:
       - Content
   /orders:
