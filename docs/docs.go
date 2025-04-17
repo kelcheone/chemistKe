@@ -76,6 +76,486 @@ const docTemplate = `{
                 }
             }
         },
+        "/cms/authors": {
+            "get": {
+                "description": "lists all authors in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "lists all Authors.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fetched Author Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new Author in the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "Registers a new Author.",
+                "parameters": [
+                    {
+                        "description": "Author to create",
+                        "name": "author",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Author created Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates an Author in the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "Updates an Author.",
+                "parameters": [
+                    {
+                        "description": "Author to update",
+                        "name": "author",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Author updated Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/authors/{id}": {
+            "get": {
+                "description": "Gets an author based on a provided id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "gets an Author.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Author ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fetched Author Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "deletes an author based on a provided id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "deletes an Author.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Author ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Fetched Author Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/categories": {
+            "get": {
+                "description": "lists all categories in the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "lists all categories.",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "PaginatedReq Page",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "PaginatedReq Limit",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Fetched categories Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Author"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new Category in the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "Registers a new cateogory.",
+                "parameters": [
+                    {
+                        "description": "Category to create",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/routes.Category"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Category created Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Category"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates a Category in the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "Updates a cateogory.",
+                "parameters": [
+                    {
+                        "description": "Category to create",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/routes.Category"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Category updated Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Category"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/cms/categories/{id}": {
+            "get": {
+                "description": "Gets a Category from the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "Gets a cateogory.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category fetched Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Category"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a Category from the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Content"
+                ],
+                "summary": "deletes a cateogory.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category Id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Category deleted Sucessfully",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Category"
+                        }
+                    },
+                    "400": {
+                        "description": "invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
         "/orders": {
             "get": {
                 "security": [
@@ -1272,6 +1752,61 @@ const docTemplate = `{
             "properties": {
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "routes.Author": {
+            "type": "object",
+            "required": [
+                "bio",
+                "user_id"
+            ],
+            "properties": {
+                "avatar": {
+                    "type": "string",
+                    "example": "https://example.com/images/avatar.png"
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "I like writing about meds"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "42cef6ad-1b39-4708-aa3f-a0c485f70db3"
+                },
+                "url": {
+                    "type": "string",
+                    "example": "https://mywebsite.com"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "42cef6ad-1b39-4708-aa3f-a0c485f70db3"
+                }
+            }
+        },
+        "routes.Category": {
+            "type": "object",
+            "required": [
+                "description",
+                "name",
+                "slug"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "All you need to know about antibiotics"
+                },
+                "id": {
+                    "type": "string",
+                    "example": "42cef6ad-1b39-4708-aa3f-a0c485f70db3"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Antibiotics"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "antibiotics"
                 }
             }
         },

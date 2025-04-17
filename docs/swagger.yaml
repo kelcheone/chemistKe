@@ -30,6 +30,46 @@ definitions:
       message:
         type: string
     type: object
+  routes.Author:
+    properties:
+      avatar:
+        example: https://example.com/images/avatar.png
+        type: string
+      bio:
+        example: I like writing about meds
+        type: string
+      id:
+        example: 42cef6ad-1b39-4708-aa3f-a0c485f70db3
+        type: string
+      url:
+        example: https://mywebsite.com
+        type: string
+      user_id:
+        example: 42cef6ad-1b39-4708-aa3f-a0c485f70db3
+        type: string
+    required:
+    - bio
+    - user_id
+    type: object
+  routes.Category:
+    properties:
+      description:
+        example: All you need to know about antibiotics
+        type: string
+      id:
+        example: 42cef6ad-1b39-4708-aa3f-a0c485f70db3
+        type: string
+      name:
+        example: Antibiotics
+        type: string
+      slug:
+        example: antibiotics
+        type: string
+    required:
+    - description
+    - name
+    - slug
+    type: object
   routes.DeleteUserResponse:
     properties:
       message:
@@ -202,6 +242,316 @@ paths:
       summary: User login
       tags:
       - Authentication
+  /cms/authors:
+    get:
+      consumes:
+      - application/json
+      description: lists all authors in the system
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Fetched Author Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Author'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: lists all Authors.
+      tags:
+      - Content
+    patch:
+      consumes:
+      - application/json
+      description: Updates an Author in the system.
+      parameters:
+      - description: Author to update
+        in: body
+        name: author
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Author'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Author updated Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Author'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Updates an Author.
+      tags:
+      - Content
+    post:
+      consumes:
+      - application/json
+      description: Creates a new Author in the system.
+      parameters:
+      - description: Author to create
+        in: body
+        name: author
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Author'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Author created Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Author'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Registers a new Author.
+      tags:
+      - Content
+  /cms/authors/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: deletes an author based on a provided id.
+      parameters:
+      - description: Author ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Fetched Author Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Author'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: deletes an Author.
+      tags:
+      - Content
+    get:
+      consumes:
+      - application/json
+      description: Gets an author based on a provided id.
+      parameters:
+      - description: Author ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Fetched Author Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Author'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: gets an Author.
+      tags:
+      - Content
+  /cms/categories:
+    get:
+      consumes:
+      - application/json
+      description: lists all categories in the system
+      parameters:
+      - description: PaginatedReq Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: PaginatedReq Limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Fetched categories Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Author'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: lists all categories.
+      tags:
+      - Content
+    patch:
+      consumes:
+      - application/json
+      description: Updates a Category in the system.
+      parameters:
+      - description: Category to create
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Category'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Category updated Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Category'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Updates a cateogory.
+      tags:
+      - Content
+    post:
+      consumes:
+      - application/json
+      description: Creates a new Category in the system.
+      parameters:
+      - description: Category to create
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Category'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Category created Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Category'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: Registers a new cateogory.
+      tags:
+      - Content
+  /cms/categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a Category from the system.
+      parameters:
+      - description: Category Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Category deleted Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Category'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      security:
+      - BearerAuth: []
+      summary: deletes a cateogory.
+      tags:
+      - Content
+    get:
+      consumes:
+      - application/json
+      description: Gets a Category from the system.
+      parameters:
+      - description: Category Id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Category fetched Sucessfully
+          schema:
+            $ref: '#/definitions/routes.Category'
+        "400":
+          description: invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Gets a cateogory.
+      tags:
+      - Content
   /orders:
     get:
       consumes:

@@ -2,7 +2,9 @@ package routes
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/kelcheone/chemistke/cmd/utils"
 	cms_proto "github.com/kelcheone/chemistke/pkg/grpc/cms"
@@ -11,33 +13,36 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// Post represents the required post format and what is also returned
 type Post struct {
-	Id            string `json:"id"`
-	PublishedDate string `json:"published_date"`
-	UpdatedDate   string `json:"updated_date"`
-	CoverImage    string `json:"cover_image"`
-	Title         string `json:"title"`
-	Description   string `json:"description"`
-	Slug          string `json:"slug"`
-	Content       string `json:"content"`
-	Status        string `json:"status"`
-	AuthorId      string `json:"author_id"`
-	CategroyId    string `json:"category_id"`
+	Id            string `json:"id"             example:"1bf447b8-a129-42a2-b11e-684a801568ff"`
+	PublishedDate string `json:"published_date" example:"2024-11-16 10:30:00"`
+	UpdatedDate   string `json:"updated_date"   example:"2024-11-16 10:30:00"`
+	CoverImage    string `json:"cover_image"    example:"https://example.com/images/crypto-future.jpg"`
+	Title         string `json:"title"          example:"Why ozempic is good for you."                 binding:"required"`
+	Description   string `json:"description"    example:"10 benefits of ozempic"                       binding:"required"`
+	Slug          string `json:"slug"           example:"why-ozempic-is-good-for-you"                  binding:"required"`
+	Content       string `json:"content"        example:"lorem ipsum"                                  binding:"required"`
+	Status        string `json:"status"         example:"draft"                                        binding:"required"`
+	AuthorId      string `json:"author_id"      example:"42cef6ad-1b39-4708-aa3f-a0c485f70db3"         binding:"required"`
+	CategroyId    string `json:"category_id"    example:"42cef6ad-1b39-4708-aa3f-a0c485f70db3"         binding:"required"`
 }
 
+// Author represents a given author
 type Author struct {
-	Id     string `json:"id"`
-	Bio    string `json:"bio"`
-	Avatar string `json:"avatar"`
-	Url    string `json:"url"`
-	UserId string `json:"user_id"`
+	Id     string `json:"id"      example:"42cef6ad-1b39-4708-aa3f-a0c485f70db3"`
+	Bio    string `json:"bio"     example:"I like writing about meds"             binding:"required"`
+	Avatar string `json:"avatar"  example:"https://example.com/images/avatar.png"`
+	Url    string `json:"url"     example:"https://mywebsite.com"`
+	UserId string `json:"user_id" example:"42cef6ad-1b39-4708-aa3f-a0c485f70db3"  binding:"required"`
 }
 
+// Category represents category to which the content refers to
 type Category struct {
-	Id          string `json:"id"`
-	Name        string `json:"name"`
-	Slug        string `json:"slug"`
-	Description string `json:"description"`
+	Id          string `json:"id"          example:"42cef6ad-1b39-4708-aa3f-a0c485f70db3"`
+	Name        string `json:"name"        example:"Antibiotics"                            binding:"required"`
+	Slug        string `json:"slug"        example:"antibiotics"                            binding:"required"`
+	Description string `json:"description" example:"All you need to know about antibiotics" binding:"required"`
 }
 
 type CmsServer struct {
@@ -65,6 +70,18 @@ func ConnectCmsServer(link string) (*CmsServer, func(), error) {
 	}, nil
 }
 
+// CreateAuthor godoc
+// @Summary Registers a new Author.
+// @Description Creates a new Author in the system.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param author body Author true "Author to create"
+// @Success 201 {object} Author "Author created Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Security BearerAuth
+// @Router /cms/authors [post]
 func (s *CmsServer) CreateAuthor(c echo.Context) error {
 	var author Author
 
@@ -120,6 +137,17 @@ func (s *CmsServer) CreateAuthor(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// GetAuthor godoc
+// @Summary gets an Author.
+// @Description Gets an author based on a provided id.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param id path string true "Author ID"
+// @Success 200 {object} Author "Fetched Author Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Router /cms/authors/{id} [get]
 func (s *CmsServer) GetAuthor(c echo.Context) error {
 	id := c.Param("id")
 
@@ -144,6 +172,18 @@ func (s *CmsServer) GetAuthor(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// UpdateAuthor godoc
+// @Summary Updates an Author.
+// @Description Updates an Author in the system.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param author body Author true "Author to update"
+// @Success 204 {object} Author "Author updated Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Security BearerAuth
+// @Router /cms/authors [patch]
 func (s *CmsServer) UpdateAuthor(c echo.Context) error {
 	var author Author
 
@@ -188,6 +228,18 @@ func (s *CmsServer) UpdateAuthor(c echo.Context) error {
 	return c.JSON(http.StatusNoContent, resp)
 }
 
+// DeleteAuthor godoc
+// @Summary deletes an Author.
+// @Description deletes an author based on a provided id.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param id path string true "Author ID"
+// @Success 204 {object} Author "Fetched Author Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Security BearerAuth
+// @Router /cms/authors/{id} [delete]
 func (s *CmsServer) DeleteAuthor(c echo.Context) error {
 	claims := utils.ExtractClaimsFromRequest(c)
 	if !claims.Admin {
@@ -218,10 +270,34 @@ func (s *CmsServer) DeleteAuthor(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// ListAuthors godoc
+// @Summary lists all Authors.
+// @Description lists all authors in the system
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param page query int true "Page number"
+// @Param limit query int true "Limit"
+// @Success 200 {object} Author "Fetched Author Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Router /cms/authors [get]
 func (s *CmsServer) ListAuthors(c echo.Context) error {
-	var req PaginatedReq
+	page := c.QueryParam("page")
+	log.Printf("The current page is %v\n", page)
 
-	if err := c.Bind(&req); err != nil {
+	int_page, err := strconv.Atoi(page)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+
+	limit := c.QueryParam("limit")
+	log.Printf("The required limit is: %v\n", limit)
+
+	int_limit, err := strconv.Atoi(limit)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrResponse{
 			Message: "invalid request",
 		})
@@ -229,8 +305,8 @@ func (s *CmsServer) ListAuthors(c echo.Context) error {
 	resp, err := s.CmsClient.ListAuthors(
 		c.Request().Context(),
 		&cms_proto.ListAuthorsRequest{
-			Page:    req.Page,
-			PerPage: req.Limit,
+			Page:    int32(int_page),
+			PerPage: int32(int_limit),
 		},
 	)
 	if err != nil {
@@ -241,6 +317,18 @@ func (s *CmsServer) ListAuthors(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// CreateCategory godoc
+// @Summary Registers a new cateogory.
+// @Description Creates a new Category in the system.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param category body Category true "Category to create"
+// @Success 201 {object} Category "Category created Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Security BearerAuth
+// @Router /cms/categories [post]
 func (s *CmsServer) CreateCategory(c echo.Context) error {
 	var category Category
 
@@ -275,6 +363,17 @@ func (s *CmsServer) CreateCategory(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// GetCategory godoc
+// @Summary Gets a cateogory.
+// @Description Gets a Category from the system.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param id path string true "Category Id"
+// @Success 200 {object} Category "Category fetched Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Router /cms/categories/{id} [get]
 func (s *CmsServer) GetCategory(c echo.Context) error {
 	id := c.Param("id")
 
@@ -297,6 +396,18 @@ func (s *CmsServer) GetCategory(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+// UpdateCategory godoc
+// @Summary Updates a cateogory.
+// @Description Updates a Category in the system.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param category body Category true "Category to create"
+// @Success 204 {object} Category "Category updated Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Security BearerAuth
+// @Router /cms/categories [patch]
 func (s *CmsServer) UpdateCategory(c echo.Context) error {
 	var category Category
 
@@ -339,8 +450,22 @@ func (s *CmsServer) UpdateCategory(c echo.Context) error {
 	return c.JSON(http.StatusNoContent, resp)
 }
 
+// DeleteCategory godoc
+// @Summary deletes a cateogory.
+// @Description Deletes a Category from the system.
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param id path string true "Category Id"
+// @Success 204 {object} Category "Category deleted Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Security BearerAuth
+// @Router /cms/categories/{id} [delete]
 func (s *CmsServer) DeleteCategory(c echo.Context) error {
 	claims := utils.ExtractClaimsFromRequest(c)
+
+	log.Printf("Is admin: %v is Author: %v\n", claims.Admin, claims.Author)
 	if !claims.Admin && !claims.Author {
 		return c.JSON(http.StatusUnauthorized, ErrResponse{
 			Message: "not authorized for this operations",
@@ -369,20 +494,41 @@ func (s *CmsServer) DeleteCategory(c echo.Context) error {
 	return c.JSON(http.StatusNoContent, resp)
 }
 
+// ListCategories godoc
+// @Summary lists all categories.
+// @Description lists all categories in the system
+// @Tags Content
+// @Accept json
+// @Produce json
+// @Param page query int true "PaginatedReq Page"
+// @Param limit query int true "PaginatedReq Limit"
+// @Success 200 {object} Author "Fetched categories Sucessfully"
+// @Failure 400 {object} HTTPError "invalid input data"
+// @Failure 500 {object} HTTPError "internal server error"
+// @Router /cms/categories [get]
 func (s *CmsServer) ListCategories(c echo.Context) error {
-	var req PaginatedReq
+	page := c.QueryParam("page")
 
-	if err := c.Bind(&req); err != nil {
+	int_page, err := strconv.Atoi(page)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, ErrResponse{
 			Message: "invalid request",
 		})
 	}
 
+	limit := c.QueryParam("limit")
+
+	int_limit, err := strconv.Atoi(limit)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
 	resp, err := s.CmsClient.ListCategories(
 		c.Request().Context(),
 		&cms_proto.ListCategoriesRequest{
-			Page:    req.Page,
-			PerPage: req.Limit,
+			Page:    int32(int_page),
+			PerPage: int32(int_limit),
 		},
 	)
 	if err != nil {
