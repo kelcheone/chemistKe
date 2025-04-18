@@ -40,7 +40,7 @@ func init() {
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:9090
+// @host chemistke-production.up.railway.app
 // @BasePath /api/v1
 // @schemes http
 
