@@ -4,7 +4,7 @@ GO_OUT_DIR := pkg/grpc
 SERVICES := user product order telehealth cms notification
 
 # Load environment variables from .env file
-include .env
+-include .env
 export
 
 GOOSE_DRIVER ?= postgres
