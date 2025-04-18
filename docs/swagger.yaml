@@ -238,7 +238,7 @@ definitions:
     - password
     - phone
     type: object
-host: localhost:9090
+host: chemistke-production.up.railway.app
 info:
   contact:
     email: Support@chemist.co.ke
