@@ -3,13 +3,10 @@ PROTO_DIR := api/proto
 GO_OUT_DIR := pkg/grpc
 SERVICES := user product order telehealth cms notification
 
-# export all variables found in the .env file
-# include .env
-# export $(shell sed 's/=.*//' .env)
+# Load environment variables from .env file
+include .env
+export
 
-
-# Database migration variables
-GOOSE_DBSTRING ?= postgres://kelche:kelche@localhost:5432/chemist_ke
 GOOSE_DRIVER ?= postgres
 GOOSE_MIGRATION_DIR ?= internal/database/migrations
 
@@ -113,21 +110,20 @@ endif
 .PHONY: db-create
 db-create:
 	@read -p "Enter migration name: " NAME; \
-	goose -dir $(GOOSE_MIGRATION_DIR) $(COLOR_FLAG) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" create $$NAME sql
+	goose create $$NAME sql --dir $(GOOSE_MIGRATION_DIR)
 
 .PHONY: db-up
 db-up:
 	@echo $(GOOSE_DBSTRING)
-	goose -dir $(GOOSE_MIGRATION_DIR) $(COLOR_FLAG) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" up
-
+	goose up --dir $(GOOSE_MIGRATION_DIR) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)"
 
 .PHONY: db-down
 db-down:
-	goose -dir $(GOOSE_MIGRATION_DIR) $(COLOR_FLAG) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" down
+	goose down --dir $(GOOSE_MIGRATION_DIR) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)"
 
 .PHONY: db-status
 db-status:
-	goose -dir $(GOOSE_MIGRATION_DIR) $(COLOR_FLAG) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)" status
+	goose status --dir $(GOOSE_MIGRATION_DIR) $(GOOSE_DRIVER) "$(GOOSE_DBSTRING)"
 
 .PHONY: pfmt
 # Format the proto files using buf format command pipe the result to the specific file
