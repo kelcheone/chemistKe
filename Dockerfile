@@ -27,13 +27,14 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
+COPY .env* ./
 
 COPY . .
 
 #Run make 
-RUN make install-plugins
+# RUN make install-plugins
 
-RUN make prepare
+# RUN make prepare
 
 
 #build both binaries
