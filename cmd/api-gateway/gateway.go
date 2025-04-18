@@ -2,9 +2,7 @@ package main
 
 import (
 	"log"
-	"os"
 
-	"github.com/joho/godotenv"
 	authservice "github.com/kelcheone/chemistke/cmd/api-gateway/auth"
 	routes "github.com/kelcheone/chemistke/cmd/api-gateway/routes"
 	"github.com/kelcheone/chemistke/cmd/utils"
@@ -52,9 +50,7 @@ func init() {
 // @description JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"
 
 func main() {
-	_ = godotenv.Load()
-	servicesHost := os.Getenv("SERVICES_HOST")
-	userServer, CloseUserConn, err := routes.ConnectUserServer(servicesHost)
+	userServer, CloseUserConn, err := routes.ConnectUserServer("localhost:8090")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,7 +58,7 @@ func main() {
 	defer CloseUserConn()
 
 	productsServer, CloseProductConn, err := routes.ConnectProductServer(
-		servicesHost,
+		"localhost:8090",
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -71,7 +67,7 @@ func main() {
 	defer CloseProductConn()
 
 	ordersServer, CloseOrderConn, err := routes.ConnectOrdersServer(
-		servicesHost,
+		"localhost:8090",
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -79,7 +75,7 @@ func main() {
 
 	defer CloseOrderConn()
 
-	cmsServer, CloseCmsConn, err := routes.ConnectCmsServer(servicesHost)
+	cmsServer, CloseCmsConn, err := routes.ConnectCmsServer("localhost:8090")
 	if err != nil {
 		log.Fatal(err)
 	}
