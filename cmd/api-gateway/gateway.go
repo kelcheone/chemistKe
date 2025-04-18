@@ -23,11 +23,6 @@ func NewServer(userClient user_proto.UserServiceClient) *Server {
 	}
 }
 
-var port string = "9090"
-
-func init() {
-}
-
 // @title ChemistKe API
 // @version 1.0
 // @description API endpoint documentation for the ChemistKe api project.
@@ -42,7 +37,7 @@ func init() {
 
 // @host chemistke-production.up.railway.app
 // @BasePath /api/v1
-// @schemes http
+// @schemes https
 
 // @securityDefinitions.apikey BearerAuth
 // @in header
@@ -83,6 +78,8 @@ func main() {
 	defer CloseCmsConn()
 
 	e := echo.New()
+	// Add this line to trust proxy headers
+	e.IPExtractor = echo.ExtractIPFromXFFHeader()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
 		AllowHeaders: []string{

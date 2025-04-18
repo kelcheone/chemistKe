@@ -2475,7 +2475,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "chemistke-production.up.railway.app",
 	BasePath:         "/api/v1",
-	Schemes:          []string{"http"},
+	Schemes:          []string{"https"},
 	Title:            "ChemistKe API",
 	Description:      "API endpoint documentation for the ChemistKe api project.",
 	InfoInstanceName: "swagger",

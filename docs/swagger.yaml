@@ -1620,7 +1620,7 @@ paths:
       tags:
       - Users
 schemes:
-- http
+- https
 securityDefinitions:
   BearerAuth:
     description: 'JWT Authorization header using the Bearer scheme. Example: "Authorization:
