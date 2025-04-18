@@ -23,6 +23,11 @@ func NewServer(userClient user_proto.UserServiceClient) *Server {
 	}
 }
 
+var port string = "9090"
+
+func init() {
+}
+
 // @title ChemistKe API
 // @version 1.0
 // @description API endpoint documentation for the ChemistKe api project.
@@ -155,5 +160,8 @@ func main() {
 	posts.GET("/author", cmsServer.GetAuthorPosts)
 	posts.GET("/get-by-author-category", cmsServer.GetAuthorCategoryPosts)
 
+	e.GET("/health", func(c echo.Context) error {
+		return c.String(200, "OK")
+	})
 	e.Logger.Fatal(e.Start(":9090"))
 }
