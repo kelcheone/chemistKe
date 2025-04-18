@@ -31,10 +31,10 @@ COPY .env* ./
 
 COPY . .
 
-#Run make 
-# RUN make install-plugins
+# Run make 
+RUN make install-plugins
 
-# RUN make prepare
+RUN make prepare
 
 
 #build both binaries
