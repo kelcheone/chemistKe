@@ -1,0 +1,76 @@
+services:
+  database:
+    container_name: chemistke_db
+    image: postgres:17
+    environment:
+      - POSTGRES_USER=${DB_USER:-pg}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-chemistke}
+      - POSTGRES_DB=${DB_NAME:-chemist_ke}
+    ports:
+      - "127.0.0.1:9999:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pg} -d ${DB_NAME:-chemist_ke}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+      args:
+        GOOSE_DBSTRING: ${GOOSE_DBSTRING}
+        DB_URL: ${DB_URL}
+    command: make db-up
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      - .env
+    restart: on-failure
+  chemistke:
+    container_name: chemistke
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - "9090:9090"
+    depends_on:
+      database:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    command: ["/app/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+networks:
+  default:
+    driver: bridge
+    name: chemistke_network
+volumes:
+  postgres_data:
+    driver: local
