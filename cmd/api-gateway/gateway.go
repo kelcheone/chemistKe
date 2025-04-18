@@ -83,7 +83,27 @@ func main() {
 	defer CloseCmsConn()
 
 	e := echo.New()
-
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowHeaders: []string{
+			echo.HeaderOrigin,
+			echo.HeaderContentType,
+			echo.HeaderAccept,
+			echo.HeaderAuthorization,
+			"X-Requested-With",
+		},
+		AllowMethods: []string{
+			echo.GET,
+			echo.HEAD,
+			echo.PUT,
+			echo.PATCH,
+			echo.POST,
+			echo.DELETE,
+			echo.OPTIONS,
+		},
+		AllowCredentials: true,
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
+	}))
 	e.Use(middleware.Logger())
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
