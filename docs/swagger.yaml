@@ -9,9 +9,9 @@ definitions:
     type: object
   authservice.LoginRequest:
     properties:
-      id:
-        description: User ID
-        example: 1bf447b8-a129-42a2-b11e-684a801568ff
+      email:
+        description: User email
+        example: user@example.com
         type: string
       password:
         description: User password
@@ -23,6 +23,11 @@ definitions:
       token:
         description: JWT authentication token
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  jwt.NumericDate:
+    properties:
+      time.Time:
         type: string
     type: object
   product_proto.UploadProdctImagesResponse:
@@ -238,7 +243,55 @@ definitions:
     - password
     - phone
     type: object
-host: chemistke-production.up.railway.app
+  utils.jwtCustomClaims:
+    properties:
+      admin:
+        type: boolean
+      aud:
+        description: the `aud` (Audience) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3
+        items:
+          type: string
+        type: array
+      author:
+        type: boolean
+      email:
+        example: john.doe@example.com
+        type: string
+      exp:
+        allOf:
+        - $ref: '#/definitions/jwt.NumericDate'
+        description: the `exp` (Expiration Time) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.4
+      iat:
+        allOf:
+        - $ref: '#/definitions/jwt.NumericDate'
+        description: the `iat` (Issued At) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
+      id:
+        type: string
+      iss:
+        description: the `iss` (Issuer) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1
+        type: string
+      jti:
+        description: the `jti` (JWT ID) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
+        type: string
+      name:
+        example: John Doe
+        type: string
+      nbf:
+        allOf:
+        - $ref: '#/definitions/jwt.NumericDate'
+        description: the `nbf` (Not Before) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.5
+      phone:
+        example: "+1234567890"
+        type: string
+      sub:
+        description: the `sub` (Subject) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.2
+        type: string
+    required:
+    - email
+    - name
+    - phone
+    type: object
+host: localhost:9090
 info:
   contact:
     email: Support@chemist.co.ke
@@ -286,6 +339,56 @@ paths:
       summary: User login
       tags:
       - Authentication
+  /auth/logout:
+    get:
+      consumes:
+      - application/json
+      description: Logout user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.jwtCustomClaims'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/authservice.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authservice.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Logout user
+      tags:
+      - auth
+  /auth/me:
+    get:
+      consumes:
+      - application/json
+      description: Get user information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.jwtCustomClaims'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/authservice.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/authservice.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user information
+      tags:
+      - auth
   /cms/authors:
     get:
       consumes:
@@ -1620,6 +1723,7 @@ paths:
       tags:
       - Users
 schemes:
+- http
 - https
 securityDefinitions:
   BearerAuth:
