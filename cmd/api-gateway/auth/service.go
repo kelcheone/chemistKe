@@ -107,6 +107,14 @@ func (u *User) Login(c echo.Context) error {
 	type response struct {
 		Token string `json:"token"`
 	}
+	// set cookie
+	c.SetCookie(&http.Cookie{
+		Name:     "token",
+		Value:    tokenString,
+		Path:     "/",
+		HttpOnly: true,
+		// Secure:   true,
+	})
 
 	return c.JSON(http.StatusAccepted, response{Token: tokenString})
 }

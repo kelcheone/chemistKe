@@ -23,6 +23,10 @@ func NewServer(userClient user_proto.UserServiceClient) *Server {
 	}
 }
 
+/* Prod env
+@host chemistke-production.up.railway.app
+*/
+
 // @title ChemistKe API
 // @version 1.0
 // @description API endpoint documentation for the ChemistKe api project.
@@ -35,9 +39,9 @@ func NewServer(userClient user_proto.UserServiceClient) *Server {
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host chemistke-production.up.railway.app
+// @host localhost:9090
 // @BasePath /api/v1
-// @schemes https
+// @schemes http https
 
 // @securityDefinitions.apikey BearerAuth
 // @in header
@@ -81,7 +85,7 @@ func main() {
 	// Add this line to trust proxy headers
 	e.IPExtractor = echo.ExtractIPFromXFFHeader()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},
+		AllowOrigins: []string{"http://localhost:3000"},
 		AllowHeaders: []string{
 			echo.HeaderOrigin,
 			echo.HeaderContentType,
