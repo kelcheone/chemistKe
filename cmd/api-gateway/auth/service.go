@@ -118,3 +118,51 @@ func (u *User) Login(c echo.Context) error {
 
 	return c.JSON(http.StatusAccepted, response{Token: tokenString})
 }
+
+// Me godoc
+// @Summary Get user information
+// @Description Get user information
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.jwtCustomClaims
+// @Failure 401 {object} ErrResponse
+// @Failure 500 {object} ErrResponse
+// @Security BearerAuth
+// @Router /auth/me [get]
+func (u *User) Me(c echo.Context) error {
+	claims := utils.ExtractClaimsFromCookie(c)
+
+	if claims == nil {
+		return c.JSON(
+			http.StatusUnauthorized,
+			ErrResponse{Message: "Unauthorized"},
+		)
+	}
+
+	return c.JSON(http.StatusOK, claims)
+}
+
+// Logout godoc
+// @Summary Logout user
+// @Description Logout user
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.jwtCustomClaims
+// @Failure 401 {object} ErrResponse
+// @Failure 500 {object} ErrResponse
+// @Security BearerAuth
+// @Router /auth/logout [get]
+func (u *User) Logout(c echo.Context) error {
+	// delete cookie
+	c.SetCookie(&http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1,
+	})
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Logged out successfully"})
+}

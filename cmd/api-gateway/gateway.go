@@ -128,6 +128,22 @@ func main() {
 		return user.Login(c)
 	})
 
+	auth.GET("/me", func(c echo.Context) error {
+		user := authservice.User{
+			Client: userServer.UserClient,
+		}
+
+		return user.Me(c)
+	}, utils.AuthMiddleware())
+
+	auth.POST("/logout", func(c echo.Context) error {
+		user := authservice.User{
+			Client: userServer.UserClient,
+		}
+
+		return user.Logout(c)
+	}, utils.AuthMiddleware())
+
 	products := v1.Group("/products")
 	products.POST("", productsServer.CreateProduct, utils.AuthMiddleware())
 	products.GET("/:id", productsServer.GetProduct)
