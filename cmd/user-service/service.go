@@ -93,7 +93,7 @@ func (s *UserService) GetUserByEmail(
 	ctx context.Context,
 	req *pb.GetUserByEmailRequest,
 ) (*pb.GetUserByEmailResponse, error) {
-	stmt := `SELECT id, name, email, phone, role FROM users WHERE email=$1`
+	stmt := `SELECT id, name, email, phone, password, role FROM users WHERE email=$1`
 	row := s.db.QueryRow(stmt, req.Email)
 
 	var gUser pb.User
@@ -105,13 +105,14 @@ func (s *UserService) GetUserByEmail(
 		&gUser.Name,
 		&gUser.Email,
 		&gUser.Phone,
+		&gUser.Password,
 		&gUser.Role,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, status.Errorf(
 				codes.NotFound,
-				"use with email %s not found",
+				"user with email %s not found",
 				req.Email,
 			)
 		}
