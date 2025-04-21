@@ -23,8 +23,8 @@ type User struct {
 
 // LoginRequest represents the expected request body for the login endpoint
 type LoginRequest struct {
-	Id       string `json:"id"       example:"1bf447b8-a129-42a2-b11e-684a801568ff"` // User ID
-	Password string `json:"password" example:"securepassword123"`                    // User password
+	Email    string `json:"email"    example:"user@example.com"`  // User email
+	Password string `json:"password" example:"securepassword123"` // User password
 }
 
 // LoginResponse represents the response from a successful login
@@ -70,10 +70,7 @@ func (u *User) Login(c echo.Context) error {
 		)
 	}
 
-	gUserResp, err := u.Client.GetUser(
-		ctx,
-		&user_proto.GetUserRequest{Id: &user_proto.UUID{Value: user.Id}},
-	)
+	getUserResp, err := u.Client.GetUserByEmail(ctx, &user_proto.GetUserByEmailRequest{Email: user.Email})
 	if err != nil {
 		return c.JSON(
 			http.StatusInternalServerError,
@@ -81,7 +78,7 @@ func (u *User) Login(c echo.Context) error {
 		)
 	}
 
-	hashedPassword := gUserResp.User.Password
+	hashedPassword := getUserResp.User.Password
 
 	err = utils.ComparePassword(user.Password, hashedPassword)
 	if err != nil {
@@ -91,10 +88,14 @@ func (u *User) Login(c echo.Context) error {
 		)
 	}
 
+	fmt.Printf("%+v\n", getUserResp)
+
 	tokenString, err := utils.CreateToken(
-		user.Id,
-		user.Name,
-		gUserResp.User.Role.String(),
+		getUserResp.User.Id.Value,
+		getUserResp.User.Email,
+		getUserResp.User.Name,
+		getUserResp.User.Phone,
+		getUserResp.User.Role.String(),
 	)
 	if err != nil {
 		return c.JSON(
