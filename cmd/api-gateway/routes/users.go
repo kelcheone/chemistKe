@@ -58,7 +58,7 @@ func ConnectUserServer(link string) (*UserServer, func(), error) {
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
-			"Faild to connect to the user service: %v",
+			"faild to connect to the user service: %v",
 			err,
 		)
 	}

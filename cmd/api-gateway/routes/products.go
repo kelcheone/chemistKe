@@ -37,7 +37,7 @@ func ConnectProductServer(link string) (*ProductServer, func(), error) {
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf(
-			"Faild to connect to the product service: %v",
+			"faild to connect to the product service: %v",
 			err,
 		)
 	}
