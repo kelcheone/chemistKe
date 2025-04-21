@@ -136,12 +136,15 @@ func VerifyToken(tokenString string) error {
 	return nil
 }
 
-var config = echojwt.Config{
-	NewClaimsFunc: func(c echo.Context) jwt.Claims {
-		return new(jwtCustomClaims)
-	},
+func AuthMiddleware() echo.MiddlewareFunc {
+	config := echojwt.Config{
+		TokenLookup: "cookie:token,header:Authorization:Bearer ",
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return new(jwtCustomClaims)
+		},
 
-	SigningKey: secretKey,
+		SigningKey: secretKey,
+	}
+
+	return echojwt.WithConfig(config)
 }
-
-var AuthMiddleware = echojwt.WithConfig(config)
