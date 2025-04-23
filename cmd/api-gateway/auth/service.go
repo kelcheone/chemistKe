@@ -122,7 +122,7 @@ func (u *User) Login(c echo.Context) error {
 // Me godoc
 // @Summary Get user information
 // @Description Get user information
-// @Tags auth
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Success 200 {object} utils.jwtCustomClaims
@@ -146,7 +146,7 @@ func (u *User) Me(c echo.Context) error {
 // Logout godoc
 // @Summary Logout user
 // @Description Logout user
-// @Tags auth
+// @Tags Authentication
 // @Accept json
 // @Produce json
 // @Success 200 {object} utils.jwtCustomClaims
