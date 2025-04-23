@@ -33,11 +33,11 @@ func Init() error {
 	product := &product_proto.Product{
 		Name:        gofakeit.Product().Name,
 		Description: gofakeit.Product().Description,
-		Category:    gofakeit.ProductCategory(),
-		SubCategory: gofakeit.Product().Categories[0],
-		Brand:       gofakeit.Company(),
-		Price:       float32(gofakeit.Product().Price),
-		Quantity:    int32(gofakeit.Number(0, 100)),
+		// Category:    gofakeit.ProductCategory(),
+		// SubCategory: gofakeit.Product().Categories[0],
+		// Brand:       gofakeit.Company(),
+		Price:    float32(gofakeit.Product().Price),
+		Quantity: int32(gofakeit.Number(0, 100)),
 	}
 
 	createRes := CreateProduct(ctx, c)
@@ -64,9 +64,9 @@ func Init() error {
 	product.Id = &product_proto.UUID{Value: createRes}
 	product.Name = gofakeit.Product().Name
 	product.Description = gofakeit.Product().Description
-	product.Category = gofakeit.ProductCategory()
-	product.SubCategory = gofakeit.Product().Categories[0]
-	product.Brand = gofakeit.Company()
+	// product.CategoryId = gofakeit.ProductCategory()
+	// product.SubCategoryId = gofakeit.Product().Categories[0]
+	// product.BrandId = gofakeit.Company()
 	product.Price = float32(gofakeit.Product().Price)
 	product.Quantity = int32(gofakeit.Number(0, 100))
 
@@ -108,11 +108,11 @@ func CreateProduct(
 	product := &product_proto.Product{
 		Name:        gofakeit.Product().Name,
 		Description: gofakeit.Product().Description,
-		Category:    gofakeit.ProductCategory(),
-		SubCategory: gofakeit.Product().Categories[0],
-		Brand:       gofakeit.Company(),
-		Price:       float32(gofakeit.Product().Price),
-		Quantity:    int32(gofakeit.Number(0, 100)),
+		// CategoryId:    gofakeit.ProductCategory(),
+		// SubCategoryId: gofakeit.Product().Categories[0],
+		// BrandId:       gofakeit.Company(),
+		Price:    float32(gofakeit.Product().Price),
+		Quantity: int32(gofakeit.Number(0, 100)),
 	}
 
 	createRes, err := c.CreateProduct(
