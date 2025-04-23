@@ -7,23 +7,23 @@ ARG DB_URL
 ENV DB_URL=$DB_URL
 
 RUN apk add --no-cache  \
-  git\
-  make\
-  build-base\
-  curl\
-  unzip
+    git\
+    make\
+    build-base\
+    curl\
+    unzip
 
 ENV PATH="/go/bin:${PATH}"
 RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
 ENV PROTOC_VERSION=29.3
 RUN curl -LO https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-x86_64.zip && \
-  unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d /usr/local && \
-  rm protoc-${PROTOC_VERSION}-linux-x86_64.zip
+    unzip protoc-${PROTOC_VERSION}-linux-x86_64.zip -d /usr/local && \
+    rm protoc-${PROTOC_VERSION}-linux-x86_64.zip
 
 WORKDIR /app
 
-COPY go.mod go.sum ./ 
+COPY go.mod go.sum ./
 
 RUN go mod download
 
@@ -31,7 +31,7 @@ COPY .env* ./
 
 COPY . .
 
-# Run make 
+# Run make
 RUN make install-plugins
 
 RUN make prepare
@@ -67,4 +67,3 @@ EXPOSE 9000 9000
 
 
 ENTRYPOINT [ "/app/entrypoint.sh" ]
-
