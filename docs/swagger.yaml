@@ -30,6 +30,31 @@ definitions:
       time.Time:
         type: string
     type: object
+  product_proto.Category:
+    properties:
+      description:
+        type: string
+      featured:
+        type: boolean
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  product_proto.GetCategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/product_proto.Category'
+        type: array
+    type: object
+  product_proto.Image:
+    properties:
+      image_type:
+        type: string
+      url:
+        type: string
+    type: object
   product_proto.UploadProdctImagesResponse:
     properties:
       message:
@@ -56,6 +81,20 @@ definitions:
     - bio
     - user_id
     type: object
+  routes.Brand:
+    properties:
+      description:
+        example: Johnson and Johnson
+        type: string
+      id:
+        example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
+        type: string
+      name:
+        example: J&J
+        type: string
+    required:
+    - name
+    type: object
   routes.Category:
     properties:
       description:
@@ -74,6 +113,30 @@ definitions:
     - description
     - name
     - slug
+    type: object
+  routes.CreateReviewRequest:
+    properties:
+      content:
+        example: This product is amazing!
+        type: string
+      product_id:
+        example: "1234567890"
+        type: string
+      rating:
+        example: 4.5
+        type: number
+      title:
+        example: Great product!
+        type: string
+      user_id:
+        example: "1234567890"
+        type: string
+    required:
+    - content
+    - product_id
+    - rating
+    - title
+    - user_id
     type: object
   routes.DeleteUserResponse:
     properties:
@@ -184,18 +247,34 @@ definitions:
     type: object
   routes.Product:
     properties:
-      brand:
+      average_rating:
+        example: 4.5
+        type: number
+      brand_id:
+        example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
+        type: string
+      brand_name:
         example: J&J
         type: string
-      category:
+      category_id:
+        example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
+        type: string
+      category_name:
         example: Antibiotics
         type: string
       description:
         example: product description
         type: string
+      featured:
+        example: false
+        type: boolean
       id:
         example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
         type: string
+      images:
+        items:
+          $ref: '#/definitions/product_proto.Image'
+        type: array
       name:
         example: Amoxilin
         type: string
@@ -205,17 +284,99 @@ definitions:
       quantity:
         example: 1000
         type: integer
-      sub-category:
+      review_count:
+        example: 10
+        type: integer
+      sub_category_id:
+        example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
+        type: string
+      sub_category_name:
         example: Mild
         type: string
     required:
-    - brand
-    - category
+    - brand_id
+    - category_id
     - description
     - name
     - price
     - quantity
-    - sub-category
+    - sub_category_id
+    type: object
+  routes.ProductCategory:
+    properties:
+      description:
+        example: product description
+        type: string
+      featured:
+        example: true
+        type: boolean
+      id:
+        example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
+        type: string
+      name:
+        example: Amoxilin
+        type: string
+    required:
+    - description
+    - featured
+    - name
+    type: object
+  routes.ProductSubCategory:
+    properties:
+      category_id:
+        example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
+        type: string
+      description:
+        example: product description
+        type: string
+      id:
+        example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
+        type: string
+      name:
+        example: anticonvulsants
+        type: string
+    required:
+    - category_id
+    - description
+    - name
+    type: object
+  routes.Review:
+    properties:
+      content:
+        example: Great product
+        type: string
+      id:
+        example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
+        type: string
+      product_id:
+        example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
+        type: string
+      rating:
+        example: 4.5
+        type: number
+      user_id:
+        example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
+        type: string
+      user_name:
+        example: John Doe
+        type: string
+    type: object
+  routes.ReviewResponse:
+    properties:
+      content:
+        type: string
+      id:
+        type: string
+      product_id:
+        type: string
+      rating:
+        type: integer
+      title:
+        type: string
+      user_id:
+        type: string
+      user_name:
+        type: string
     type: object
   routes.User:
     properties:
@@ -363,7 +524,7 @@ paths:
       - BearerAuth: []
       summary: Logout user
       tags:
-      - auth
+      - Authentication
   /auth/me:
     get:
       consumes:
@@ -388,7 +549,7 @@ paths:
       - BearerAuth: []
       summary: Get user information
       tags:
-      - auth
+      - Authentication
   /cms/authors:
     get:
       consumes:
@@ -1330,15 +1491,197 @@ paths:
       summary: Get product by ID
       tags:
       - Products
-  /products/get-products-by-brand:
+  /products/{id}/reviews:
+    get:
+      consumes:
+      - application/json
+      description: Get reviews for a product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.ReviewResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Get reviews for a product
+      tags:
+      - Products
+  /products/brands:
+    get:
+      consumes:
+      - application/json
+      description: Gets all brands
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.Brand'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Gets all brands
+      tags:
+      - Products
+    patch:
+      consumes:
+      - application/json
+      description: Updates a brand by id
+      parameters:
+      - description: Brand
+        in: body
+        name: brand
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Brand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.Brand'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Updates a brand by id
+      tags:
+      - Products
+    post:
+      consumes:
+      - application/json
+      description: Creates a new brand
+      parameters:
+      - description: Brand
+        in: body
+        name: brand
+        required: true
+        schema:
+          $ref: '#/definitions/routes.Brand'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.Brand'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Creates a new brand
+      tags:
+      - Products
+  /products/brands/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a brand by id
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.Brand'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Deletes a brand by id
+      tags:
+      - Products
+    get:
+      consumes:
+      - application/json
+      description: Gets a brand by id
+      parameters:
+      - description: Brand ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.Brand'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Gets a brand by id
+      tags:
+      - Products
+  /products/by-brand:
     get:
       consumes:
       - application/json
       description: Get products based on a given brand name
       parameters:
       - description: ProductReq Brand
-        in: query
-        name: brand
+        in: path
+        name: id
         required: true
         type: string
       - description: ProductReq Page
@@ -1368,15 +1711,15 @@ paths:
       summary: Get products based on brand
       tags:
       - Products
-  /products/get-products-by-category:
+  /products/by-category/{id}:
     get:
       consumes:
       - application/json
       description: Get products based on a givne Category
       parameters:
       - description: ProductReq Category
-        in: query
-        name: category
+        in: path
+        name: id
         required: true
         type: string
       - description: ProductReq Page
@@ -1407,15 +1750,15 @@ paths:
       summary: Get products Based on a category
       tags:
       - Products
-  /products/get-products-by-sub-category:
+  /products/by-subcategory/{id}:
     get:
       consumes:
       - application/json
       description: Get products based on a given sub-category, page, and limit
       parameters:
       - description: ProductReq SubCategory
-        in: query
-        name: sub-category
+        in: path
+        name: id
         required: true
         type: string
       - description: ProductReq Page
@@ -1426,6 +1769,7 @@ paths:
       - description: ProductReq Limit
         in: query
         name: limit
+        required: true
         type: integer
       produces:
       - application/json
@@ -1443,6 +1787,228 @@ paths:
           schema:
             $ref: '#/definitions/routes.HTTPError'
       summary: Get products based on a sub-category
+      tags:
+      - Products
+  /products/categories:
+    get:
+      consumes:
+      - application/json
+      description: Gets paginated product Categories
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product_proto.GetCategoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Gets product categories.
+      tags:
+      - Products
+    patch:
+      consumes:
+      - application/json
+      description: Update a category by id
+      parameters:
+      - description: Category
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/routes.ProductCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.ProductCategory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a category by id
+      tags:
+      - Products
+    post:
+      consumes:
+      - application/json
+      description: Create a new category
+      parameters:
+      - description: Category
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/routes.ProductCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.ProductCategory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new category
+      tags:
+      - Products
+  /products/categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a given category.
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Deletes a given category.
+      tags:
+      - Products
+    get:
+      consumes:
+      - application/json
+      description: Get a category by id
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.ProductCategory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Get A category by id
+      tags:
+      - Products
+  /products/categories/{id}/subcategories:
+    get:
+      consumes:
+      - application/json
+      description: Gets subcategories in a paginated manner
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/routes.ProductSubCategory'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Retrives paginated Subcategories
+      tags:
+      - Products
+  /products/categories/featured:
+    get:
+      consumes:
+      - application/json
+      description: Gets paginated featured product Categories
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/product_proto.GetCategoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Gets featured product categories.
       tags:
       - Products
   /products/images/{id}:
@@ -1512,6 +2078,227 @@ paths:
       security:
       - BearerAuth: []
       summary: Upload a product image
+      tags:
+      - Products
+  /products/rating/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get rating for a product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.ReviewResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Get rating for a product
+      tags:
+      - Products
+  /products/review/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a review for a product
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.ReviewResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Get a review for a product
+      tags:
+      - Products
+  /products/reviews:
+    post:
+      consumes:
+      - application/json
+      description: Create a new review for a product
+      parameters:
+      - description: Review to create
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/routes.CreateReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.Review'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new review for a product
+      tags:
+      - Products
+  /products/subcategories:
+    patch:
+      consumes:
+      - application/json
+      description: Updates a subcategory by its ID.
+      parameters:
+      - description: Subcategory
+        in: body
+        name: subcategory
+        required: true
+        schema:
+          $ref: '#/definitions/routes.ProductSubCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.ProductSubCategory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Updates a subcategory by its ID
+      tags:
+      - Products
+    post:
+      consumes:
+      - application/json
+      description: Creates a new subcategory within a specified category.
+      parameters:
+      - description: Subcategory
+        in: body
+        name: subcategory
+        required: true
+        schema:
+          $ref: '#/definitions/routes.ProductSubCategory'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/routes.ProductSubCategory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Creates a subcategory within a category
+      tags:
+      - Products
+  /products/subcategories/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: Subcategory ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      security:
+      - BearerAuth: []
+      summary: Deletes a subcategory by its ID
+      tags:
+      - Products
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a subcategory by its ID.
+      parameters:
+      - description: Subcategory ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.ProductSubCategory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Retrieves a subcategory by its ID
       tags:
       - Products
   /users:

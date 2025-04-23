@@ -1,0 +1,25 @@
+meta {
+  name: Create Review
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:9090/api/v1/products/reviews
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "content": "This product is amazing!",
+    "product_id": "3ecea702-5b45-4710-9842-a3c79bece9e4",
+    "rating": 4,
+    "title": "Great product!",
+    "user_id": "1bf447b8-a129-42a2-b11e-684a801568ff"
+  }
+}
