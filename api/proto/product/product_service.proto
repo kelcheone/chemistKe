@@ -10,50 +10,95 @@ service ProductService {
   rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductResponse) {}
   rpc UpdateProduct(UpdateProductRequest) returns (UpdateProductResponse) {}
   rpc GetProducts(GetProductsRequest) returns (GetProductsResponse) {}
-  rpc GetProductsByCategory(GetProductsByCategoryRequest)
-      returns (GetProductsByCategoryResponse) {}
-  rpc GetProductsBySubCategory(GetProductsBySubCategoryRequest)
-      returns (GetProductsBySubCategoryResponse) {}
-  rpc GetProductsByBrand(GetProductsByBrandRequest)
-      returns (GetProductsByBrandResponse) {}
-  rpc UploadProdctImages(UploadProdctImagesRequest)
-      returns (UploadProdctImagesResponse) {}
-  rpc GetProductImages(GetProductImagesRequest)
-      returns (GetProductImagesResponse) {}
+  rpc GetProductsByCategory(GetProductsByCategoryRequest) returns (GetProductsByCategoryResponse) {}
+  rpc GetProductsBySubCategory(GetProductsBySubCategoryRequest) returns (GetProductsBySubCategoryResponse) {}
+  rpc GetProductsByBrand(GetProductsByBrandRequest) returns (GetProductsByBrandResponse) {}
+  rpc UploadProdctImages(UploadProdctImagesRequest) returns (UploadProdctImagesResponse) {}
+  rpc GetProductImages(GetProductImagesRequest) returns (GetProductImagesResponse) {}
+  rpc GetFeaturedProducts(GetFeaturedProductsRequest) returns (GetFeaturedProductsResponse) {}
+
+  rpc CreateReview(CreateReviewRequest) returns (CreateReviewResponse) {}
+  rpc GetReviews(GetReviewsRequest) returns (GetReviewsResponse) {}
+  rpc GetReview(GetReviewRequest) returns (GetReviewResponse) {}
+  rpc GetProductRating(GetProductRatingRequest) returns (GetProductRatingResponse) {}
+
+  // categories
+  rpc CreateCategory(CreateCategoryRequest) returns (CreateCategoryResponse) {}
+  rpc GetCategories(GetCategoriesRequest) returns (GetCategoriesResponse) {}
+  rpc UpdateCategory(UpdateCategoryRequest) returns (UpdateCategoryResponse) {}
+  rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse) {}
+  rpc GetFeaturedCategories(GetFeaturedCategoriesRequest) returns (GetFeaturedCategoriesResponse) {}
+  rpc GetCategory(GetCategoryRequest) returns (GetCategoryResponse) {}
+
+  // Subcategories
+  rpc CreateSubCategory(CreateSubCategoryRequest) returns (CreateSubCategoryResponse) {}
+  rpc GetSubCategories(GetSubCategoriesRequest) returns (GetSubCategoriesResponse) {}
+  rpc UpdateSubCategory(UpdateSubCategoryRequest) returns (UpdateSubCategoryResponse) {}
+  rpc DeleteSubCategory(DeleteSubCategoryRequest) returns (DeleteSubCategoryResponse) {}
+  rpc GetSubCategory(GetSubCategoryRequest) returns (GetSubCategoryResponse) {}
+
+  //Brand
+  rpc CreateBrand(CreateBrandRequest) returns (CreateBrandResponse) {}
+  rpc GetBrands(GetBrandsRequest) returns (GetBrandsResponse) {}
+  rpc UpdateBrand(UpdateBrandRequest) returns (UpdateBrandResponse) {}
+  rpc DeleteBrand(DeleteBrandRequest) returns (DeleteBrandResponse) {}
+  rpc GetBrand(GetBrandRequest) returns (GetBrandResponse) {}
 }
 
 message Product {
   UUID id = 1;
   string name = 2;
   string description = 3;
-  string category = 4;
-  string sub_category = 5;
-  string brand = 6;
+  UUID category_id = 4;
+  UUID sub_category_id = 5;
+  UUID brand_id = 6;
   float price = 7;
   int32 quantity = 8;
   repeated Image images = 9;
+  float average_rating = 10;
+  int32 review_count = 11;
+  bool featured = 12;
+  string category_name = 13;
+  string sub_category_name = 14;
+  string brand_name = 15;
 }
 
-message UUID { string value = 1; }
+message UUID {
+  string value = 1;
+}
 
-message CreateProductRequest { Product product = 1; }
+message CreateProductRequest {
+  Product product = 1;
+}
 
 message CreateProductResponse {
   string message = 1;
   UUID id = 2;
 }
 
-message GetProductRequest { UUID id = 1; }
+message GetProductRequest {
+  UUID id = 1;
+}
 
-message GetProductResponse { Product product = 1; }
+message GetProductResponse {
+  Product product = 1;
+}
 
-message DeleteProductRequest { UUID id = 1; }
+message DeleteProductRequest {
+  UUID id = 1;
+}
 
-message DeleteProductResponse { string message = 1; }
+message DeleteProductResponse {
+  string message = 1;
+}
 
-message UpdateProductRequest { Product product = 1; }
+message UpdateProductRequest {
+  Product product = 1;
+}
 
-message UpdateProductResponse { string message = 1; }
+message UpdateProductResponse {
+  string message = 1;
+}
 
 message GetProductsRequest {
   int32 limit = 1;
@@ -69,7 +114,7 @@ message GetProductsResponse {
 message Empty {}
 
 message GetProductsByCategoryRequest {
-  string category = 1;
+  UUID category_id = 1;
   int32 limit = 2;
   int32 page = 3;
 }
@@ -81,7 +126,7 @@ message GetProductsByCategoryResponse {
 }
 
 message GetProductsBySubCategoryRequest {
-  string sub_category = 1;
+  UUID sub_category_id = 1;
   int32 limit = 2;
   int32 page = 3;
 }
@@ -93,7 +138,7 @@ message GetProductsBySubCategoryResponse {
 }
 
 message GetProductsByBrandRequest {
-  string brand = 1;
+  UUID brand_id = 1;
   int32 limit = 2;
   int32 page = 3;
 }
@@ -104,9 +149,24 @@ message GetProductsByBrandResponse {
   int32 page = 3;
 }
 
-message GetProductImagesRequest { UUID productId = 1; }
+message GetFeaturedProductsRequest {
+  int32 limit = 1;
+  int32 page = 2;
+}
 
-message GetProductImagesResponse { repeated Image urls = 1; }
+message GetFeaturedProductsResponse {
+  repeated Product products = 1;
+  int32 limit = 2;
+  int32 page = 3;
+}
+
+message GetProductImagesRequest {
+  UUID productId = 1;
+}
+
+message GetProductImagesResponse {
+  repeated Image urls = 1;
+}
 
 message UploadProdctImagesRequest {
   UUID productId = 1;
@@ -116,9 +176,272 @@ message UploadProdctImagesRequest {
   int32 imageSize = 5;
 }
 
-message UploadProdctImagesResponse { string message = 1; }
+message UploadProdctImagesResponse {
+  string message = 1;
+}
 
 message Image {
   string url = 1;
   string image_type = 2;
+}
+
+// Category
+message Category {
+  UUID id = 1;
+  string name = 2;
+  string description = 3;
+  bool featured = 4;
+}
+
+message CategoryRequest {
+  UUID id = 1;
+}
+
+message CategoryResponse {
+  Category category = 1;
+}
+
+message CreateCategoryRequest {
+  string name = 1;
+  string description = 2;
+  bool featured = 3;
+}
+
+message CreateCategoryResponse {
+  string message = 1;
+}
+
+message UpdateCategoryRequest {
+  UUID id = 1;
+  string name = 2;
+  string description = 3;
+  bool featured = 4;
+}
+
+message UpdateCategoryResponse {
+  string message = 1;
+}
+
+message DeleteCategoryRequest {
+  UUID id = 1;
+}
+
+message DeleteCategoryResponse {
+  string message = 1;
+}
+
+message GetCategoryRequest {
+  UUID id = 1;
+}
+
+message GetCategoryResponse {
+  Category category = 1;
+}
+
+message GetFeaturedCategoriesRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message GetFeaturedCategoriesResponse {
+  repeated Category categories = 1;
+}
+
+message GetCategoriesRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message GetCategoriesResponse {
+  repeated Category categories = 1;
+}
+
+// SubCategory
+message SubCategory {
+  UUID id = 1;
+  UUID category_id = 2;
+  string name = 3;
+  string description = 4;
+}
+
+message CreateSubCategoryRequest {
+  UUID category_id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message CreateSubCategoryResponse {
+  string message = 1;
+}
+
+message UpdateSubCategoryRequest {
+  UUID id = 1;
+  UUID category_id = 2;
+  string name = 3;
+  string description = 4;
+}
+
+message UpdateSubCategoryResponse {
+  string message = 1;
+}
+
+message DeleteSubCategoryRequest {
+  UUID id = 1;
+}
+
+message DeleteSubCategoryResponse {
+  string message = 1;
+}
+
+message GetSubCategoriesRequest {
+  UUID category_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message GetSubCategoriesResponse {
+  repeated SubCategory sub_categories = 1;
+}
+
+message GetSubCategoryRequest {
+  UUID id = 1;
+}
+
+message GetSubCategoryResponse {
+  SubCategory sub_category = 1;
+}
+
+message GetSubCategoryByIdRequest {
+  UUID id = 1;
+}
+
+message GetSubCategoryByIdResponse {
+  SubCategory sub_category = 1;
+}
+
+//Brand
+message Brand {
+  UUID id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message CreateBrandRequest {
+  string name = 1;
+  string description = 2;
+}
+
+message CreateBrandResponse {
+  string message = 1;
+}
+
+message GetBrandsRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+}
+
+message GetBrandsResponse {
+  repeated Brand brands = 1;
+}
+
+message UpdateBrandRequest {
+  UUID id = 1;
+  string name = 2;
+  string description = 3;
+}
+
+message UpdateBrandResponse {
+  string message = 1;
+}
+
+message DeleteBrandRequest {
+  UUID id = 1;
+}
+
+message DeleteBrandResponse {
+  string message = 1;
+}
+
+message GetBrandRequest {
+  UUID id = 1;
+}
+
+message GetBrandResponse {
+  Brand brand = 1;
+}
+
+message GetBrandByIdRequest {
+  UUID id = 1;
+}
+
+message GetBrandByIdResponse {
+  Brand brand = 1;
+}
+
+// Product Reviews
+message Review {
+  UUID id = 1;
+  UUID product_id = 2;
+  UUID user_id = 3;
+  string title = 4;
+  string content = 5;
+  float rating = 6;
+  string user_name = 7;
+}
+
+message ReviewRequest {
+  UUID product_id = 1;
+  UUID user_id = 2;
+  string title = 3;
+  string content = 4;
+  float rating = 5;
+}
+
+message ReviewResponse {
+  string message = 1;
+}
+
+message GetReviewRequest {
+  UUID review_id = 1;
+}
+
+message GetReviewResponse {
+  Review review = 1;
+}
+
+message CreateReviewRequest {
+  UUID product_id = 1;
+  UUID user_id = 2;
+  string title = 3;
+  string content = 4;
+  float rating = 5;
+}
+
+message CreateReviewResponse {
+  string message = 1;
+}
+
+message GetReviewsRequest {
+  UUID product_id = 1;
+}
+
+message GetReviewsResponse {
+  repeated Review reviews = 1;
+}
+
+message GetReveiewsRequest {
+  UUID product_id = 1;
+}
+
+message GetReveiewsResponse {
+  repeated Review reviews = 1;
+}
+
+message GetProductRatingRequest {
+  UUID product_id = 1;
+}
+
+message GetProductRatingResponse {
+  float average_rating = 1;
+  int32 number_of_reviews = 2;
 }
