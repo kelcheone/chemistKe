@@ -14,7 +14,9 @@ service UserService {
   rpc GetUsers(GetUsersRequest) returns (GetUsersResponse) {}
 }
 
-message UUID { string value = 1; }
+message UUID {
+  string value = 1;
+}
 
 message User {
   UUID id = 1;
@@ -25,11 +27,17 @@ message User {
   UserRoles role = 6;
 }
 
-message AddUserRequest { User user = 1; }
+message AddUserRequest {
+  User user = 1;
+}
 
-message GetUserResponse { User user = 1; }
+message GetUserResponse {
+  User user = 1;
+}
 
-message GetUserByEmailResponse { User user = 1; }
+message GetUserByEmailResponse {
+  User user = 1;
+}
 
 message GetUsersResponse {
   repeated User users = 1;
@@ -44,17 +52,29 @@ message GetUsersRequest {
 
 message Empty {}
 
-message GetUserRequest { UUID id = 1; }
+message GetUserRequest {
+  UUID id = 1;
+}
 
-message GetUserByEmailRequest { string email = 2; }
+message GetUserByEmailRequest {
+  string email = 2;
+}
 
-message UpdateUserRequest { User user = 1; }
+message UpdateUserRequest {
+  User user = 1;
+}
 
-message DeleteUserRequest { UUID id = 1; }
+message DeleteUserRequest {
+  UUID id = 1;
+}
 
-message DeleteUserResponse { string message = 1; }
+message DeleteUserResponse {
+  string message = 1;
+}
 
-message UpdateUserResponse { string message = 1; }
+message UpdateUserResponse {
+  string message = 1;
+}
 message AddUserResponse {
   string message = 1;
   UUID id = 2;
