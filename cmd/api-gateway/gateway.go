@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 
+	"github.com/go-playground/validator"
 	authservice "github.com/kelcheone/chemistke/cmd/api-gateway/auth"
 	routes "github.com/kelcheone/chemistke/cmd/api-gateway/routes"
 	"github.com/kelcheone/chemistke/cmd/utils"
@@ -23,7 +24,15 @@ func NewServer(userClient user_proto.UserServiceClient) *Server {
 	}
 }
 
-/* Prod env
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *CustomValidator) Validate(i interface{}) error {
+	return cv.validator.Struct(i)
+}
+
+/*
 @host chemistke-production.up.railway.app
 */
 
@@ -82,7 +91,7 @@ func main() {
 	defer CloseCmsConn()
 
 	e := echo.New()
-	// Add this line to trust proxy headers
+	e.Validator = &CustomValidator{validator: validator.New()}
 	e.IPExtractor = echo.ExtractIPFromXFFHeader()
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:3000"},
@@ -148,15 +157,34 @@ func main() {
 	products.POST("", productsServer.CreateProduct, utils.AuthMiddleware())
 	products.GET("/:id", productsServer.GetProduct)
 	products.GET("", productsServer.GetProducts)
-	products.GET("/get-products-by-brand", productsServer.GetProductsByBrand)
-	products.GET(
-		"/get-products-by-category",
-		productsServer.GetProductsByCategory,
-	)
-	products.GET(
-		"/get-products-by-sub-category",
-		productsServer.GetProductsBySCategory,
-	)
+	products.GET("/by-brand/:id", productsServer.GetProductsByBrand)
+	products.GET("/by-category/:id", productsServer.GetProductsByCategory)
+	products.GET("/by-subcategory/:id", productsServer.GetProductsBySCategory)
+	products.POST("/reviews", productsServer.CreateReview, utils.AuthMiddleware())
+	products.GET("/ratings/:id", productsServer.GetProductRating)
+	products.GET("/reviews/:id", productsServer.GetReview)
+	products.GET("/:id/reviews", productsServer.GetReviews)
+
+	// product-category
+	products.POST("/categories", productsServer.CreateCategory, utils.AuthMiddleware())
+	products.GET("/categories/:id", productsServer.GetCategory)
+	products.GET("/categories", productsServer.GetCategories)
+	products.GET("/categories/featured", productsServer.GetFeaturedCategories)
+	products.PATCH("/categories", productsServer.UpdateCategory, utils.AuthMiddleware())
+	products.DELETE("/categories/:id", productsServer.DeleteCategory, utils.AuthMiddleware())
+	products.GET("/categories/:id/subcategories", productsServer.GetSubCategories)
+	// product-sub-category
+	products.POST("/subcategories", productsServer.CreateSubCategory, utils.AuthMiddleware())
+	products.GET("/subcategories/:id", productsServer.GetSubCategory)
+	products.GET("/subcategories", productsServer.GetSubCategories)
+	products.PATCH("/subcategories", productsServer.UpdateSubCategory, utils.AuthMiddleware())
+	products.DELETE("/subcategories/:id", productsServer.DeleteSubCategory, utils.AuthMiddleware())
+	// product-brand
+	products.POST("/brands", productsServer.CreateBrand, utils.AuthMiddleware())
+	products.GET("/brands", productsServer.GetBrands)
+	products.GET("/brands/:id", productsServer.GetBrand)
+	products.PATCH("/brands", productsServer.UpdateBrand, utils.AuthMiddleware())
+	products.DELETE("/brands/:id", productsServer.DeleteBrand, utils.AuthMiddleware())
 
 	products.PATCH("", productsServer.UpdateProduct, utils.AuthMiddleware())
 	products.DELETE("/:id", productsServer.DeleteProduct, utils.AuthMiddleware())
