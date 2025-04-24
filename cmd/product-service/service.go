@@ -6,12 +6,16 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math"
+	"net/url"
+	"time"
 
 	"github.com/kelcheone/chemistke/internal/database"
 	"github.com/kelcheone/chemistke/internal/files"
 	"github.com/kelcheone/chemistke/pkg/codes"
 	pb "github.com/kelcheone/chemistke/pkg/grpc/product"
 	"github.com/kelcheone/chemistke/pkg/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type ProductService struct {
@@ -76,13 +80,16 @@ SELECT
   p.price,
   p.quantity,
   p.featured,
+  p.slug,
   pc.name AS category_name,
   psc.name AS sub_category_name,
   pb.name AS brand_name,
   pi.url AS image_url,
   pi.image_type,
   pr.review_count,
-  pr.average_rating
+  pr.average_rating,
+  p.created_at,
+  p.updated_at
 FROM
   products p
 LEFT JOIN (
@@ -102,7 +109,7 @@ LEFT JOIN
 LEFT JOIN
   product_sub_category psc ON p.sub_category_id = psc.id
 LEFT JOIN
-  product_brands pb ON p.brand_id = pb.id
+  product_brand pb ON p.brand_id = pb.id
 WHERE
   p.id = $1;`
 	rows, err := s.db.Query(stmt, req.Id.Value)
@@ -126,17 +133,20 @@ WHERE
 		var reviewCount sql.NullInt32
 		var averageRating sql.NullFloat64
 		var categoryName, subCategoryName, brandName sql.NullString
+		var createdAt, updatedAt sql.NullTime
+		var brandId, categoryId, subCategoryId string
 
 		err := rows.Scan(
 			&productId,
 			&product.Name,
 			&product.Description,
-			&product.CategoryId,
-			&product.SubCategoryId,
-			&product.BrandId,
+			&categoryId,
+			&subCategoryId,
+			&brandId,
 			&product.Price,
 			&product.Quantity,
 			&product.Featured,
+			&product.Slug,
 			&categoryName,
 			&subCategoryName,
 			&brandName,
@@ -144,6 +154,8 @@ WHERE
 			&imageType,
 			&reviewCount,
 			&averageRating,
+			&createdAt,
+			&updatedAt,
 		)
 		if err != nil {
 			return nil, status.Errorf(
@@ -152,6 +164,10 @@ WHERE
 				err.Error(),
 			)
 		}
+		product.CategoryId = &pb.UUID{Value: categoryId}
+		product.SubCategoryId = &pb.UUID{Value: subCategoryId}
+		product.BrandId = &pb.UUID{Value: brandId}
+
 		image := pb.Image{
 			Url:       imageUrl.String,
 			ImageType: imageType.String,
@@ -187,6 +203,18 @@ WHERE
 			product.BrandName = brandName.String
 		} else {
 			product.BrandName = ""
+		}
+
+		if createdAt.Valid {
+			product.CreatedAt = timestamppb.New(createdAt.Time)
+		} else {
+			product.CreatedAt = timestamppb.New(time.Time{})
+		}
+
+		if updatedAt.Valid {
+			product.UpdatedAt = timestamppb.New(updatedAt.Time)
+		} else {
+			product.UpdatedAt = timestamppb.New(time.Time{})
 		}
 
 		product.Id = &pb.UUID{Value: productId}
@@ -271,7 +299,8 @@ func (s *ProductService) UpdateProduct(
 func BuildProductQuery(whereClause string, additionalClauses string) string {
 	baseQuery := `
 	WITH paginated_products AS (
-		SELECT *
+		SELECT *,
+		COUNT(*) OVER() AS total_count
 		FROM products
 		%s -- WHERE clause will be inserted here
 		ORDER BY id
@@ -288,13 +317,17 @@ func BuildProductQuery(whereClause string, additionalClauses string) string {
 		p.price,
 		p.quantity,
 		p.featured,
+		p.slug,
 		pc.name as category_name,
 		psc.name as sub_category_name,
 		pb.name as brand_name,
 		pi.url AS image_url,
 		pi.image_type,
 		pr.review_count,
-		pr.average_rating
+		pr.average_rating,
+		p.created_at,
+		p.updated_at,
+		p.total_count
 	FROM
 		paginated_products p
 	LEFT JOIN productimages pi ON p.id = pi.product_id
@@ -331,6 +364,7 @@ func scanProducts(rows *sql.Rows) ([]*pb.Product, error) {
 		var categoryName, subCategoryName, brandName, imageUrl, imageType sql.NullString
 		var reviewCount sql.NullInt32
 		var averageRating sql.NullFloat64
+		var createdAt, updatedAt sql.NullTime
 
 		err := rows.Scan(
 			&productId,
@@ -342,6 +376,7 @@ func scanProducts(rows *sql.Rows) ([]*pb.Product, error) {
 			&product.Price,
 			&product.Quantity,
 			&product.Featured,
+			&product.Slug,
 			&categoryName,
 			&subCategoryName,
 			&brandName,
@@ -349,6 +384,9 @@ func scanProducts(rows *sql.Rows) ([]*pb.Product, error) {
 			&imageType,
 			&reviewCount,
 			&averageRating,
+			&createdAt,
+			&updatedAt,
+			&product.TotalCount,
 		)
 		if err != nil {
 			return nil, status.Errorf(
@@ -394,6 +432,17 @@ func scanProducts(rows *sql.Rows) ([]*pb.Product, error) {
 			product.BrandName = ""
 		}
 
+		if createdAt.Valid {
+			product.CreatedAt = timestamppb.New(createdAt.Time)
+		} else {
+			product.CreatedAt = timestamppb.New(time.Time{})
+		}
+		if updatedAt.Valid {
+			product.UpdatedAt = timestamppb.New(updatedAt.Time)
+		} else {
+			product.UpdatedAt = timestamppb.New(time.Time{})
+		}
+
 		if exists, found := productsMap[productId]; found {
 			if image.Url != "" {
 				exists.Images = append(exists.Images, &image)
@@ -415,11 +464,16 @@ func scanProducts(rows *sql.Rows) ([]*pb.Product, error) {
 	return products, nil
 }
 
+func getMaxPages(product *pb.Product, limit int32) int32 {
+	total_count := product.GetTotalCount()
+	return int32(math.Ceil(float64(total_count) / float64(limit)))
+}
+
 func (s *ProductService) GetProducts(
 	ctx context.Context,
 	req *pb.GetProductsRequest,
 ) (*pb.GetProductsResponse, error) {
-	stmt := BuildProductQuery("", "")
+	stmt := BuildProductQuery("", "ORDER BY created_at DESC")
 	rows, err := s.db.Query(stmt, req.Limit, req.Page)
 	if err != nil {
 		return nil, status.Errorf(
@@ -439,11 +493,13 @@ func (s *ProductService) GetProducts(
 			err,
 		)
 	}
+	max_pages := getMaxPages(products[0], req.Limit)
 
 	return &pb.GetProductsResponse{
 		Products: products,
 		Limit:    req.Limit,
 		Page:     req.Page,
+		MaxPages: max_pages,
 	}, nil
 }
 
@@ -451,7 +507,7 @@ func (s *ProductService) GetProductsByCategory(
 	ctx context.Context,
 	req *pb.GetProductsByCategoryRequest,
 ) (*pb.GetProductsByCategoryResponse, error) {
-	stmt := BuildProductQuery("category_id=$3", "")
+	stmt := BuildProductQuery("category_id=$3", "ORDER BY created_at DESC")
 
 	rows, err := s.db.Query(stmt, req.Limit, req.Page, req.CategoryId.Value)
 	if err != nil {
@@ -472,11 +528,13 @@ func (s *ProductService) GetProductsByCategory(
 			err,
 		)
 	}
+	max_pages := getMaxPages(products[0], req.Limit)
 
 	return &pb.GetProductsByCategoryResponse{
 		Products: products,
 		Limit:    req.Limit,
 		Page:     req.Page,
+		MaxPages: max_pages,
 	}, nil
 }
 
@@ -484,7 +542,7 @@ func (s *ProductService) GetProductsBySubCategory(
 	ctx context.Context,
 	req *pb.GetProductsBySubCategoryRequest,
 ) (*pb.GetProductsBySubCategoryResponse, error) {
-	stmt := BuildProductQuery("sub_category_id=$3", "")
+	stmt := BuildProductQuery("sub_category_id=$3", "ORDER BY created_at DESC")
 
 	rows, err := s.db.Query(stmt, req.Limit, req.Page, req.SubCategoryId.Value)
 	if err != nil {
@@ -506,10 +564,12 @@ func (s *ProductService) GetProductsBySubCategory(
 		)
 	}
 
+	max_pages := getMaxPages(products[0], req.Limit)
 	return &pb.GetProductsBySubCategoryResponse{
 		Products: products,
 		Limit:    req.Limit,
 		Page:     req.Page,
+		MaxPages: max_pages,
 	}, nil
 }
 
@@ -517,7 +577,7 @@ func (s *ProductService) GetProductsByBrand(
 	ctx context.Context,
 	req *pb.GetProductsByBrandRequest,
 ) (*pb.GetProductsByBrandResponse, error) {
-	stmt := BuildProductQuery("brand_id=$3", "")
+	stmt := BuildProductQuery("brand_id=$3", "ORDER BY created_at DESC")
 	rows, err := s.db.Query(stmt, req.Limit, req.Page, req.BrandId.Value)
 	if err != nil {
 		return nil, status.Errorf(
@@ -538,15 +598,17 @@ func (s *ProductService) GetProductsByBrand(
 		)
 	}
 
+	max_pages := getMaxPages(products[0], req.Limit)
 	return &pb.GetProductsByBrandResponse{
 		Products: products,
 		Limit:    req.Limit,
 		Page:     req.Page,
+		MaxPages: max_pages,
 	}, nil
 }
 
 func (s *ProductService) GetFeaturedProducts(ctx context.Context, req *pb.GetFeaturedProductsRequest) (*pb.GetFeaturedProductsResponse, error) {
-	stmt := BuildProductQuery("featured=true", "")
+	stmt := BuildProductQuery("featured=true", "ORDER BY created_at DESC")
 
 	rows, err := s.db.Query(stmt, req.Limit, req.Page)
 	if err != nil {
@@ -568,10 +630,214 @@ func (s *ProductService) GetFeaturedProducts(ctx context.Context, req *pb.GetFea
 		)
 	}
 
+	max_pages := getMaxPages(products[0], req.Limit)
 	return &pb.GetFeaturedProductsResponse{
 		Products: products,
 		Limit:    req.Limit,
 		Page:     req.Page,
+		MaxPages: max_pages,
+	}, nil
+}
+
+func (s *ProductService) GetProductBySlug(ctx context.Context, req *pb.GetProductBySlugRequest) (*pb.GetProductBySlugResponse, error) {
+	stmt := `
+SELECT
+  p.id,
+  p.name,
+  p.description,
+  p.category_id,
+  p.sub_category_id,
+  p.brand_id,
+  p.price,
+  p.quantity,
+  p.featured,
+  p.slug,
+  pc.name AS category_name,
+  psc.name AS sub_category_name,
+  pb.name AS brand_name,
+  pi.url AS image_url,
+  pi.image_type,
+  pr.review_count,
+  pr.average_rating,
+  p.created_at,
+  p.updated_at
+FROM
+  products p
+LEFT JOIN (
+  SELECT
+    product_id,
+    COUNT(*) AS review_count,
+    AVG(rating) AS average_rating
+  FROM
+    product_reviews
+  GROUP BY
+    product_id
+) pr ON p.id = pr.product_id
+LEFT JOIN
+  productimages pi ON p.id = pi.product_id
+LEFT JOIN
+ product_category pc ON p.category_id = pc.id
+LEFT JOIN
+  product_sub_category psc ON p.sub_category_id = psc.id
+LEFT JOIN
+  product_brand pb ON p.brand_id = pb.id
+WHERE
+  p.slug = $1;`
+
+	decodedSlug, err := url.QueryUnescape(req.Slug)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"error decoding slug: %+v",
+			err,
+		)
+	}
+
+	rows, err := s.db.Query(stmt, decodedSlug)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"error getting product: %+v",
+			err,
+		)
+	}
+
+	defer rows.Close()
+
+	var product pb.Product
+	var productId string
+	product.Images = []*pb.Image{}
+
+	for rows.Next() {
+
+		var imageUrl, imageType sql.NullString
+		var reviewCount sql.NullInt32
+		var averageRating sql.NullFloat64
+		var categoryName, subCategoryName, brandName sql.NullString
+		var createdAt, updatedAt sql.NullTime
+		var brandId, categoryId, subCategoryId string
+
+		err := rows.Scan(
+			&productId,
+			&product.Name,
+			&product.Description,
+			&categoryId,
+			&subCategoryId,
+			&brandId,
+			&product.Price,
+			&product.Quantity,
+			&product.Featured,
+			&product.Slug,
+			&categoryName,
+			&subCategoryName,
+			&brandName,
+			&imageUrl,
+			&imageType,
+			&reviewCount,
+			&averageRating,
+			&createdAt,
+			&updatedAt,
+		)
+		if err != nil {
+			return nil, status.Errorf(
+				codes.Internal,
+				"error scanning rows: %v",
+				err.Error(),
+			)
+		}
+		product.CategoryId = &pb.UUID{Value: categoryId}
+		product.SubCategoryId = &pb.UUID{Value: subCategoryId}
+		product.BrandId = &pb.UUID{Value: brandId}
+
+		image := pb.Image{
+			Url:       imageUrl.String,
+			ImageType: imageType.String,
+		}
+		if image.Url != "" {
+			product.Images = append(product.Images, &image)
+		}
+
+		if reviewCount.Valid {
+			product.ReviewCount = reviewCount.Int32
+		} else {
+			product.ReviewCount = 0
+		}
+		if averageRating.Valid {
+			product.AverageRating = float32(averageRating.Float64)
+		} else {
+			product.AverageRating = 0.0
+		}
+
+		if categoryName.Valid {
+			product.CategoryName = categoryName.String
+		} else {
+			product.CategoryName = ""
+		}
+
+		if subCategoryName.Valid {
+			product.SubCategoryName = subCategoryName.String
+		} else {
+			product.SubCategoryName = ""
+		}
+
+		if brandName.Valid {
+			product.BrandName = brandName.String
+		} else {
+			product.BrandName = ""
+		}
+
+		if createdAt.Valid {
+			product.CreatedAt = timestamppb.New(createdAt.Time)
+		} else {
+			product.CreatedAt = timestamppb.New(time.Time{})
+		}
+
+		if updatedAt.Valid {
+			product.UpdatedAt = timestamppb.New(updatedAt.Time)
+		} else {
+			product.UpdatedAt = timestamppb.New(time.Time{})
+		}
+
+		product.Id = &pb.UUID{Value: productId}
+
+	}
+	if productId == "" {
+		return nil, status.Errorf(
+			codes.NotFound,
+			"product with id %s not found.",
+			req.Slug,
+		)
+	}
+	return &pb.GetProductBySlugResponse{
+		Product: &product,
+	}, nil
+}
+
+func (p *ProductService) GetProductsByCategorySlug(ctx context.Context, req *pb.GetProductsByCategorySlugRequest) (*pb.GetProductsByCategorySlugResponse, error) {
+	// first get the id of the slug.
+	resp, err := p.GetCategoryBySlug(ctx, &pb.GetCategoryBySlugRequest{Slug: req.CategorySlug})
+	if err != nil {
+		return nil, status.Errorf(
+			codes.NotFound,
+			"category with slug %s not found.",
+			req.CategorySlug,
+		)
+	}
+
+	categoryId := resp.Category.Id
+
+	// now get the products by category id.
+	productResp, err := p.GetProductsByCategory(ctx, &pb.GetProductsByCategoryRequest{CategoryId: categoryId, Limit: req.Limit, Page: req.Page})
+	if err != nil {
+		return nil, status.Errorf(
+			codes.NotFound,
+			"products with category id %s not found.",
+			categoryId,
+		)
+	}
+
+	return &pb.GetProductsByCategorySlugResponse{
+		Products: productResp.Products,
 	}, nil
 }
 
@@ -804,7 +1070,7 @@ func (s *ProductService) CreateCategory(ctx context.Context, req *pb.CreateCateg
 }
 
 func (s *ProductService) GetCategories(ctx context.Context, req *pb.GetCategoriesRequest) (*pb.GetCategoriesResponse, error) {
-	stmt := `SELECT id, name, description, featured FROM product_category LIMIT $1 OFFSET $2`
+	stmt := `SELECT id, name, description, featured, slug FROM product_category LIMIT $1 OFFSET $2`
 	rows, err := s.db.Query(stmt, req.Limit, req.Offset)
 	if err != nil {
 		return nil, status.Errorf(
@@ -819,7 +1085,7 @@ func (s *ProductService) GetCategories(ctx context.Context, req *pb.GetCategorie
 	for rows.Next() {
 		var categoryId string
 		var category pb.Category
-		err := rows.Scan(&categoryId, &category.Name, &category.Description, &category.Featured)
+		err := rows.Scan(&categoryId, &category.Name, &category.Description, &category.Featured, &category.Slug)
 		if err != nil {
 			return nil, status.Errorf(
 				codes.Internal,
@@ -869,7 +1135,7 @@ func (s *ProductService) DeleteCategory(ctx context.Context, req *pb.DeleteCateg
 }
 
 func (s *ProductService) GetFeaturedCategories(ctx context.Context, req *pb.GetFeaturedCategoriesRequest) (*pb.GetFeaturedCategoriesResponse, error) {
-	stmt := `SELECT id, name, description, featured FROM product_category WHERE featured = true`
+	stmt := `SELECT id, name, description, featured, slug FROM product_category WHERE featured = true`
 	rows, err := s.db.Query(stmt)
 	if err != nil {
 		return nil, status.Errorf(
@@ -884,7 +1150,7 @@ func (s *ProductService) GetFeaturedCategories(ctx context.Context, req *pb.GetF
 	for rows.Next() {
 		var category pb.Category
 		var categoryId string
-		err := rows.Scan(&categoryId, &category.Name, &category.Description, &category.Featured)
+		err := rows.Scan(&categoryId, &category.Name, &category.Description, &category.Featured, &category.Slug)
 		if err != nil {
 			return nil, status.Errorf(
 				codes.Internal,
@@ -902,11 +1168,39 @@ func (s *ProductService) GetFeaturedCategories(ctx context.Context, req *pb.GetF
 }
 
 func (s *ProductService) GetCategory(ctx context.Context, req *pb.GetCategoryRequest) (*pb.GetCategoryResponse, error) {
-	stmt := `SELECT id, name, description FROM product_category WHERE id = $1`
+	stmt := `SELECT id, name, description, slug, featured FROM product_category WHERE id = $1`
 	row := s.db.QueryRow(stmt, req.Id.Value)
 	var category pb.Category
 	var categoryId string
-	err := row.Scan(&categoryId, &category.Name, &category.Description)
+	err := row.Scan(&categoryId, &category.Name, &category.Description, &category.Slug, &category.Featured)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"error getting category: %v",
+			err.Error(),
+		)
+	}
+
+	category.Id = &pb.UUID{Value: categoryId}
+	return &pb.GetCategoryResponse{
+		Category: &category,
+	}, nil
+}
+
+func (s *ProductService) GetCategoryBySlug(ctx context.Context, req *pb.GetCategoryBySlugRequest) (*pb.GetCategoryResponse, error) {
+	stmt := `SELECT id, name, description, slug, featured FROM product_category WHERE slug = $1`
+	decodedSlug, err := url.QueryUnescape(req.Slug)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"invalid slug: %v",
+			err.Error(),
+		)
+	}
+	row := s.db.QueryRow(stmt, decodedSlug)
+	var category pb.Category
+	var categoryId string
+	err = row.Scan(&categoryId, &category.Name, &category.Description, &category.Slug, &category.Featured)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -922,8 +1216,8 @@ func (s *ProductService) GetCategory(ctx context.Context, req *pb.GetCategoryReq
 }
 
 func (s *ProductService) CreateSubCategory(ctx context.Context, req *pb.CreateSubCategoryRequest) (*pb.CreateSubCategoryResponse, error) {
-	stmt := `INSERT INTO product_sub_category (name, description, category_id) VALUES ($1, $2, $3)`
-	_, err := s.db.Exec(stmt, req.Name, req.Description, req.CategoryId.Value)
+	stmt := `INSERT INTO product_sub_category (name, description, category_id, slug) VALUES ($1, $2, $3, $4)`
+	_, err := s.db.Exec(stmt, req.Name, req.Description, req.CategoryId.Value, req.Slug)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -938,7 +1232,7 @@ func (s *ProductService) CreateSubCategory(ctx context.Context, req *pb.CreateSu
 }
 
 func (s *ProductService) GetSubCategories(ctx context.Context, req *pb.GetSubCategoriesRequest) (*pb.GetSubCategoriesResponse, error) {
-	stmt := `SELECT id, name, description, category_id FROM product_sub_category WHERE category_id = $1 LIMIT $2 OFFSET $3`
+	stmt := `SELECT id, name, description, category_id, slug FROM product_sub_category WHERE category_id = $1 LIMIT $2 OFFSET $3`
 	rows, err := s.db.Query(stmt, req.CategoryId.Value, req.Limit, req.Offset)
 	if err != nil {
 		return nil, status.Errorf(
@@ -953,7 +1247,7 @@ func (s *ProductService) GetSubCategories(ctx context.Context, req *pb.GetSubCat
 	var subCategoryId, categoryId string
 	for rows.Next() {
 		var subCategory pb.SubCategory
-		if err := rows.Scan(&subCategoryId, &subCategory.Name, &subCategory.Description, &categoryId); err != nil {
+		if err := rows.Scan(&subCategoryId, &subCategory.Name, &subCategory.Description, &categoryId, &subCategory.Slug); err != nil {
 			return nil, status.Errorf(
 				codes.Internal,
 				"error scanning subcategory: %v",
@@ -980,8 +1274,8 @@ func (s *ProductService) GetSubCategories(ctx context.Context, req *pb.GetSubCat
 }
 
 func (s *ProductService) UpdateSubCategory(ctx context.Context, req *pb.UpdateSubCategoryRequest) (*pb.UpdateSubCategoryResponse, error) {
-	stmt := `UPDATE product_sub_category SET name = $1, description = $2 WHERE id = $3`
-	if _, err := s.db.Exec(stmt, req.Name, req.Description, req.Id.Value); err != nil {
+	stmt := `UPDATE product_sub_category SET name = $1, description = $2, slug = $3 WHERE id = $4`
+	if _, err := s.db.Exec(stmt, req.Name, req.Description, req.Slug, req.Id.Value); err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
 			"error updating subcategory: %v",
@@ -1010,12 +1304,42 @@ func (s *ProductService) DeleteSubCategory(ctx context.Context, req *pb.DeleteSu
 }
 
 func (s *ProductService) GetSubCategory(ctx context.Context, req *pb.GetSubCategoryRequest) (*pb.GetSubCategoryResponse, error) {
-	stmt := `SELECT id, name, description, category_id FROM product_sub_category WHERE id = $1`
+	stmt := `SELECT id, name, description, category_id, slug FROM product_sub_category WHERE id = $1`
 	row := s.db.QueryRow(stmt, req.Id.Value)
 	var subCategory pb.SubCategory
 	var subCategoryId string
 	var categoryId string
-	if err := row.Scan(&subCategoryId, &subCategory.Name, &subCategory.Description, &categoryId); err != nil {
+	if err := row.Scan(&subCategoryId, &subCategory.Name, &subCategory.Description, &categoryId, &subCategory.Slug); err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			"error scanning subcategory: %v",
+			err.Error(),
+		)
+	}
+
+	subCategory.Id = &pb.UUID{Value: subCategoryId}
+	subCategory.CategoryId = &pb.UUID{Value: categoryId}
+
+	return &pb.GetSubCategoryResponse{
+		SubCategory: &subCategory,
+	}, nil
+}
+
+func (p *ProductService) GetSubCategoryBySlug(ctx context.Context, req *pb.GetSubCategoryBySlugRequest) (*pb.GetSubCategoryResponse, error) {
+	stmt := `SELECT id, name, description, category_id, slug FROM product_sub_category WHERE slug = $1`
+	decodedSlug, err := url.QueryUnescape(req.Slug)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			"error decoding slug: %v",
+			err.Error(),
+		)
+	}
+	row := p.db.QueryRow(stmt, decodedSlug)
+	var subCategory pb.SubCategory
+	var subCategoryId string
+	var categoryId string
+	if err := row.Scan(&subCategoryId, &subCategory.Name, &subCategory.Description, &categoryId, &subCategory.Slug); err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
 			"error scanning subcategory: %v",

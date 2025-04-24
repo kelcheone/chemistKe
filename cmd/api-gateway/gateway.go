@@ -157,9 +157,13 @@ func main() {
 	products.POST("", productsServer.CreateProduct, utils.AuthMiddleware())
 	products.GET("/:id", productsServer.GetProduct)
 	products.GET("", productsServer.GetProducts)
+	products.GET("/featured", productsServer.GetFeaturedProducts)
 	products.GET("/by-brand/:id", productsServer.GetProductsByBrand)
 	products.GET("/by-category/:id", productsServer.GetProductsByCategory)
+	products.GET("/by-category/slug/:slug", productsServer.GetProductsByCategorySlug)
 	products.GET("/by-subcategory/:id", productsServer.GetProductsBySCategory)
+	products.GET("/slug/:slug", productsServer.GetProductBySlug)
+
 	products.POST("/reviews", productsServer.CreateReview, utils.AuthMiddleware())
 	products.GET("/ratings/:id", productsServer.GetProductRating)
 	products.GET("/reviews/:id", productsServer.GetReview)
@@ -173,12 +177,14 @@ func main() {
 	products.PATCH("/categories", productsServer.UpdateCategory, utils.AuthMiddleware())
 	products.DELETE("/categories/:id", productsServer.DeleteCategory, utils.AuthMiddleware())
 	products.GET("/categories/:id/subcategories", productsServer.GetSubCategories)
+	products.GET("/categories/slug/:slug", productsServer.GetCategoryBySlug)
 	// product-sub-category
 	products.POST("/subcategories", productsServer.CreateSubCategory, utils.AuthMiddleware())
 	products.GET("/subcategories/:id", productsServer.GetSubCategory)
 	products.GET("/subcategories", productsServer.GetSubCategories)
 	products.PATCH("/subcategories", productsServer.UpdateSubCategory, utils.AuthMiddleware())
 	products.DELETE("/subcategories/:id", productsServer.DeleteSubCategory, utils.AuthMiddleware())
+	products.GET("/subcategories/slug/:slug", productsServer.GetSubCategoryBySlug)
 	// product-brand
 	products.POST("/brands", productsServer.CreateBrand, utils.AuthMiddleware())
 	products.GET("/brands", productsServer.GetBrands)

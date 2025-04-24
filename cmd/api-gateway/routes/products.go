@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/kelcheone/chemistke/cmd/utils"
 	product_proto "github.com/kelcheone/chemistke/pkg/grpc/product"
@@ -28,9 +29,12 @@ type Product struct {
 	Images          []*product_proto.Image `json:"images"`
 	AverageRating   float32                `json:"average_rating" example:"4.5"`
 	ReviewCount     int32                  `json:"review_count" example:"10"`
-	CategoryName    string                 `json:"category_name" example:"Antibiotics"`
-	SubCategoryName string                 `json:"sub_category_name" example:"Mild"`
-	BrandName       string                 `json:"brand_name" example:"J&J"`
+	CategoryName    string                 `json:"category" example:"Antibiotics"`
+	SubCategoryName string                 `json:"sub_category" example:"Mild"`
+	BrandName       string                 `json:"brand" example:"J&J"`
+	Slug            string                 `json:"slug" example:"antibiotics-mild-jj"`
+	CreatedAt       time.Time              `json:"created_at" example:"2022-01-01T00:00:00Z"`
+	UpdatedAt       time.Time              `json:"updated_at" example:"2022-01-01T00:00:00Z"`
 }
 
 // Review represents the data required to create a review
@@ -136,6 +140,9 @@ func convertProduct(resp *product_proto.Product) Product {
 		BrandName:       resp.BrandName,
 		Quantity:        resp.Quantity,
 		AverageRating:   resp.AverageRating,
+		Slug:            resp.Slug,
+		CreatedAt:       resp.CreatedAt.AsTime(),
+		UpdatedAt:       resp.UpdatedAt.AsTime(),
 	}
 }
 
@@ -174,14 +181,50 @@ func (p *ProductServer) GetProduct(c echo.Context) error {
 	return c.JSON(http.StatusOK, product)
 }
 
+// GetProductBySlug godoc
+// @Summary Get product by slug
+// @Description Get a product by product slug
+// @Tags Products
+// @Accept json
+// @Produce json
+// @Param slug path string true "Product Slug"
+// @Success 201 {object} Product "Successfully updated user"
+// @Failure 400 {object} HTTPError "Invalid input data"
+// @Failure 500 {object} HTTPError "Internal server error"
+// @Router /products/slug/{slug} [get]
+func (p *ProductServer) GetProductBySlug(c echo.Context) error {
+	slug := c.Param("slug")
+
+	if slug == "" {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "Invalid request",
+		})
+	}
+
+	req := &product_proto.GetProductBySlugRequest{
+		Slug: slug,
+	}
+
+	resp, err := p.ProductClient.GetProductBySlug(c.Request().Context(), req)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrResponse{
+			Message: err.Error(),
+		})
+	}
+
+	product := convertProduct(resp.Product)
+
+	return c.JSON(http.StatusOK, product)
+}
+
 // GetProducts godoc
 // @Summary Get products
 // @Description Get products based on page and limit
 // @Tags Products
 // @Accept json
 // @Produce json
-// @Param page query int true "PaginationRequest Page"
-// @Param limit query int tru "PaginationRequest Limit"
+// @Param page query int true "Page"
+// @Param limit query int true "Limit"
 // @Success 201 {object} Product "Successfully updated user"
 // @Failure 400 {object} HTTPError "Invalid input data"
 // @Failure 500 {object} HTTPError "Internal server error"
@@ -197,6 +240,7 @@ func (p *ProductServer) GetProducts(c echo.Context) error {
 			Message: "invalid request",
 		})
 	}
+
 	productReq.Page = n_page
 
 	limit := c.QueryParam("limit")
@@ -227,7 +271,10 @@ func (p *ProductServer) GetProducts(c echo.Context) error {
 		products = append(products, convertProduct(product))
 	}
 	return c.JSON(http.StatusOK, map[string]any{
-		"products": products,
+		"products":     products,
+		"max_pages":    resp.GetMaxPages(),
+		"current_page": resp.GetPage(),
+		"limit":        resp.GetLimit(),
 	})
 }
 
@@ -238,6 +285,66 @@ type ProductReq struct {
 	Brand       string `json:"brand"`
 	Page        int32  `json:"page"`
 	Limit       int32  `json:"limit"`
+}
+
+// GetFeaturedProducts godoc
+// @Summary Get Featured products
+// @Description Get products based on page and limit
+// @Tags Products
+// @Accept json
+// @Produce json
+// @Param page query int true "Page"
+// @Param limit query int true "Limit"
+// @Success 201 {object} Product "Successfully updated user"
+// @Failure 400 {object} HTTPError "Invalid input data"
+// @Failure 500 {object} HTTPError "Internal server error"
+// @Router /products/featured [get]
+func (p *ProductServer) GetFeaturedProducts(c echo.Context) error {
+	var productReq PaginationRequest
+
+	page := c.QueryParam("page")
+
+	n_page, err := strconv.Atoi(page)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+	productReq.Page = n_page
+
+	limit := c.QueryParam("limit")
+
+	n_limit, err := strconv.Atoi(limit)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+
+	productReq.Limit = n_limit
+
+	req := &product_proto.GetFeaturedProductsRequest{
+		Limit: int32(productReq.Limit),
+		Page:  int32(productReq.Page),
+	}
+
+	resp, err := p.ProductClient.GetFeaturedProducts(c.Request().Context(), req)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrResponse{
+			Message: err.Error(),
+		})
+	}
+
+	var products []Product
+	for _, product := range resp.Products {
+		products = append(products, convertProduct(product))
+	}
+	return c.JSON(http.StatusOK, map[string]any{
+		"products":     products,
+		"max_pages":    resp.GetMaxPages(),
+		"current_page": resp.GetPage(),
+		"limit":        resp.GetLimit(),
+	})
 }
 
 // GetProductsByCategory godoc
@@ -298,7 +405,76 @@ func (p *ProductServer) GetProductsByCategory(c echo.Context) error {
 		products = append(products, convertProduct(product))
 	}
 	return c.JSON(http.StatusOK, map[string]any{
-		"products": products,
+		"products":     products,
+		"max_pages":    resp.GetMaxPages(),
+		"current_page": resp.GetPage(),
+		"limit":        resp.GetLimit(),
+	})
+}
+
+// GetProductsByCategorySlug godoc
+// @Summary Get products Based on a category slug
+// @Description Get products based on a given category slug, page, and limit
+// @Tags Products
+// @Accept json
+// @Produce json
+// @Param slug path string true "ProductReq Category"
+// @Param page query int true "ProductReq Page"
+// @Param limit query int true "ProductReq Limit"
+// @Success 201 {object} Product "Successfully updated user"
+// @Failure 400 {object} HTTPError "Invalid input data"
+// @Failure 500 {object} HTTPError "Internal server error"
+// @Router /products/by-category/{slug} [get]
+func (p *ProductServer) GetProductsByCategorySlug(c echo.Context) error {
+	slug := c.Param("slug")
+	if slug == "" {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+	page := c.QueryParam("page")
+
+	n_page, err := strconv.Atoi(page)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+
+	limit := c.QueryParam("limit")
+
+	n_limit, err := strconv.Atoi(limit)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "invalid request",
+		})
+	}
+
+	req := &product_proto.GetProductsByCategorySlugRequest{
+		CategorySlug: slug,
+		Limit:        int32(n_limit),
+		Page:         int32(n_page),
+	}
+
+	resp, err := p.ProductClient.GetProductsByCategorySlug(
+		c.Request().Context(),
+		req,
+	)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrResponse{
+			Message: err.Error(),
+		})
+	}
+
+	var products []Product
+	for _, product := range resp.Products {
+		products = append(products, convertProduct(product))
+	}
+	return c.JSON(http.StatusOK, map[string]any{
+		"products":     products,
+		"max_pages":    resp.GetMaxPages(),
+		"current_page": resp.GetPage(),
+		"limit":        resp.GetLimit(),
 	})
 }
 
@@ -361,7 +537,10 @@ func (p *ProductServer) GetProductsBySCategory(c echo.Context) error {
 		products = append(products, convertProduct(product))
 	}
 	return c.JSON(http.StatusOK, map[string]any{
-		"products": products,
+		"products":     products,
+		"max_pages":    resp.GetMaxPages(),
+		"current_page": resp.GetPage(),
+		"limit":        resp.GetLimit(),
 	})
 }
 
@@ -373,7 +552,7 @@ func (p *ProductServer) GetProductsBySCategory(c echo.Context) error {
 // @Produce json
 // @Param id path string true "ProductReq Brand"
 // @Param page query int true "ProductReq Page"
-// @Param limit query int tru "ProductReq Limit"
+// @Param limit query int true "ProductReq Limit"
 // @Success 201 {object} Product "Successfully updated user"
 // @Failure 400 {object} HTTPError "Invalid input data"
 // @Failure 500 {object} HTTPError "Internal server error"
@@ -424,7 +603,10 @@ func (p *ProductServer) GetProductsByBrand(c echo.Context) error {
 		products = append(products, convertProduct(product))
 	}
 	return c.JSON(http.StatusOK, map[string]any{
-		"products": products,
+		"products":     products,
+		"max_pages":    resp.GetMaxPages(),
+		"current_page": resp.GetPage(),
+		"limit":        resp.GetLimit(),
 	})
 }
 
@@ -832,6 +1014,7 @@ type ProductCategory struct {
 	Name        string `json:"name"         example:"Amoxilin"                             binding:"required"`
 	Description string `json:"description"  example:"product description"                  binding:"required"`
 	Featured    bool   `json:"featured"     example:"true" binding:"required"`
+	Slug        string `json:"slug"         example:"amoxilin"                             binding:"required"`
 }
 
 // CreateCategory godoc
@@ -902,6 +1085,42 @@ func (p *ProductServer) GetCategory(c echo.Context) error {
 		Name:        resp.Category.Name,
 		Description: resp.Category.Description,
 		Featured:    resp.Category.Featured,
+		Slug:        resp.Category.Slug,
+	}
+
+	return c.JSON(http.StatusOK, categoryResp)
+}
+
+// GetCategoryBySlug godoc
+// @Summary Get A category by slug
+// @Description Get a category by slug
+// @Tags Products
+// @Accept json
+// @Produce json
+// @Param slug path string true "Category Slug"
+// @Success 200 {object} ProductCategory
+// @Failure 400 {object} ErrResponse
+// @Failure 500 {object} ErrResponse
+// @Router /products/categories/slug/{slug} [get]
+func (p *ProductServer) GetCategoryBySlug(c echo.Context) error {
+	slug := c.Param("slug")
+	getCategoryReq := &product_proto.GetCategoryBySlugRequest{
+		Slug: slug,
+	}
+
+	resp, err := p.ProductClient.GetCategoryBySlug(c.Request().Context(), getCategoryReq)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrResponse{
+			Message: err.Error(),
+		})
+	}
+
+	categoryResp := &ProductCategory{
+		Id:          resp.Category.Id.Value,
+		Name:        resp.Category.Name,
+		Description: resp.Category.Description,
+		Featured:    resp.Category.Featured,
+		Slug:        resp.Category.Slug,
 	}
 
 	return c.JSON(http.StatusOK, categoryResp)
@@ -931,6 +1150,7 @@ func (p *ProductServer) UpdateCategory(c echo.Context) error {
 		Name:        category.Name,
 		Description: category.Description,
 		Featured:    category.Featured,
+		Slug:        category.Slug,
 	}
 
 	resp, err := p.ProductClient.UpdateCategory(c.Request().Context(), updateCategoryReq)
@@ -1025,6 +1245,7 @@ func (p *ProductServer) GetCategories(c echo.Context) error {
 			Name:        category.Name,
 			Description: category.Description,
 			Featured:    category.Featured,
+			Slug:        category.Slug,
 		})
 	}
 
@@ -1081,6 +1302,7 @@ func (p *ProductServer) GetFeaturedCategories(c echo.Context) error {
 			Name:        category.Name,
 			Description: category.Description,
 			Featured:    category.GetFeatured(),
+			Slug:        category.Slug,
 		})
 	}
 
@@ -1095,6 +1317,7 @@ type ProductSubCategory struct {
 	CategoryId  string `json:"category_id"  example:"f183e73c-687d-44ad-83e6-636ecbb7a7d8" binding:"required"`
 	Name        string `json:"name"         example:"anticonvulsants" binding:"required"`
 	Description string `json:"description"  example:"product description" binding:"required"`
+	Slug        string `json:"slug"         example:"anticonvulsants" binding:"required"`
 }
 
 // CreateSubCategory godoc
@@ -1169,6 +1392,46 @@ func (p *ProductServer) GetSubCategory(c echo.Context) error {
 		CategoryId:  resp.SubCategory.CategoryId.Value,
 		Name:        resp.SubCategory.Name,
 		Description: resp.SubCategory.Description,
+		Slug:        resp.SubCategory.Slug,
+	})
+}
+
+// GetSubCategoryBySlug godoc
+// @Summary Get A subcategory by slug
+// @Description Get a subcategory by slug
+// @Tags Products
+// @Accept json
+// @Produce json
+// @Param slug path string true "Subcategory Slug"
+// @Success 200 {object} ProductSubCategory
+// @Failure 400 {object} ErrResponse
+// @Failure 500 {object} ErrResponse
+// @Router /products/subcategories/slug/{slug} [get]
+func (p *ProductServer) GetSubCategoryBySlug(c echo.Context) error {
+	slug := c.Param("slug")
+	if slug == "" {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: "slug is required",
+		})
+	}
+
+	getSubCategoryReq := &product_proto.GetSubCategoryBySlugRequest{
+		Slug: slug,
+	}
+
+	resp, err := p.ProductClient.GetSubCategoryBySlug(c.Request().Context(), getSubCategoryReq)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, ErrResponse{
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, ProductSubCategory{
+		Id:          resp.SubCategory.Id.Value,
+		CategoryId:  resp.SubCategory.CategoryId.Value,
+		Name:        resp.SubCategory.Name,
+		Description: resp.SubCategory.Description,
+		Slug:        resp.SubCategory.Slug,
 	})
 }
 
@@ -1197,6 +1460,7 @@ func (p *ProductServer) UpdateSubCategory(c echo.Context) error {
 		Id:          &product_proto.UUID{Value: subcategory.Id},
 		Name:        subcategory.Name,
 		Description: subcategory.Description,
+		Slug:        subcategory.Slug,
 	}
 
 	resp, err := p.ProductClient.UpdateSubCategory(c.Request().Context(), updateSubCategoryReq)
@@ -1297,6 +1561,7 @@ func (p *ProductServer) GetSubCategories(c echo.Context) error {
 			Id:          subCategory.Id.Value,
 			Name:        subCategory.Name,
 			Description: subCategory.Description,
+			Slug:        subCategory.Slug,
 		})
 	}
 
