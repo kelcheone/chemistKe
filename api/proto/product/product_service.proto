@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package product_proto;
 
+import "google/protobuf/timestamp.proto";
+
 option go_package = "github.com/kelcheone/chemistke/api/proto/product_proto";
 
 service ProductService {
@@ -16,6 +18,8 @@ service ProductService {
   rpc UploadProdctImages(UploadProdctImagesRequest) returns (UploadProdctImagesResponse) {}
   rpc GetProductImages(GetProductImagesRequest) returns (GetProductImagesResponse) {}
   rpc GetFeaturedProducts(GetFeaturedProductsRequest) returns (GetFeaturedProductsResponse) {}
+  rpc GetProductBySlug(GetProductBySlugRequest) returns (GetProductBySlugResponse) {}
+  rpc GetProductsByCategorySlug(GetProductsByCategorySlugRequest) returns (GetProductsByCategorySlugResponse) {}
 
   rpc CreateReview(CreateReviewRequest) returns (CreateReviewResponse) {}
   rpc GetReviews(GetReviewsRequest) returns (GetReviewsResponse) {}
@@ -29,6 +33,7 @@ service ProductService {
   rpc DeleteCategory(DeleteCategoryRequest) returns (DeleteCategoryResponse) {}
   rpc GetFeaturedCategories(GetFeaturedCategoriesRequest) returns (GetFeaturedCategoriesResponse) {}
   rpc GetCategory(GetCategoryRequest) returns (GetCategoryResponse) {}
+  rpc GetCategoryBySlug(GetCategoryBySlugRequest) returns (GetCategoryResponse) {}
 
   // Subcategories
   rpc CreateSubCategory(CreateSubCategoryRequest) returns (CreateSubCategoryResponse) {}
@@ -36,6 +41,7 @@ service ProductService {
   rpc UpdateSubCategory(UpdateSubCategoryRequest) returns (UpdateSubCategoryResponse) {}
   rpc DeleteSubCategory(DeleteSubCategoryRequest) returns (DeleteSubCategoryResponse) {}
   rpc GetSubCategory(GetSubCategoryRequest) returns (GetSubCategoryResponse) {}
+  rpc GetSubCategoryBySlug(GetSubCategoryBySlugRequest) returns (GetSubCategoryResponse) {}
 
   //Brand
   rpc CreateBrand(CreateBrandRequest) returns (CreateBrandResponse) {}
@@ -44,6 +50,7 @@ service ProductService {
   rpc DeleteBrand(DeleteBrandRequest) returns (DeleteBrandResponse) {}
   rpc GetBrand(GetBrandRequest) returns (GetBrandResponse) {}
 }
+// import time
 
 message Product {
   UUID id = 1;
@@ -61,6 +68,13 @@ message Product {
   string category_name = 13;
   string sub_category_name = 14;
   string brand_name = 15;
+  string slug = 16;
+  google.protobuf.Timestamp created_at = 17;
+  google.protobuf.Timestamp updated_at = 18;
+  // maximum number of pages
+  int32 max_pages = 19;
+  int32 current_page = 20;
+  int32 total_count = 21;
 }
 
 message UUID {
@@ -109,6 +123,7 @@ message GetProductsResponse {
   repeated Product products = 1;
   int32 limit = 2;
   int32 page = 3;
+  int32 max_pages = 4;
 }
 
 message Empty {}
@@ -123,6 +138,7 @@ message GetProductsByCategoryResponse {
   repeated Product products = 1;
   int32 limit = 2;
   int32 page = 3;
+  int32 max_pages = 4;
 }
 
 message GetProductsBySubCategoryRequest {
@@ -135,6 +151,7 @@ message GetProductsBySubCategoryResponse {
   repeated Product products = 1;
   int32 limit = 2;
   int32 page = 3;
+  int32 max_pages = 4;
 }
 
 message GetProductsByBrandRequest {
@@ -147,6 +164,20 @@ message GetProductsByBrandResponse {
   repeated Product products = 1;
   int32 limit = 2;
   int32 page = 3;
+  int32 max_pages = 4;
+}
+
+message GetProductsByCategorySlugRequest {
+  string category_slug = 1;
+  int32 limit = 2;
+  int32 page = 3;
+}
+
+message GetProductsByCategorySlugResponse {
+  repeated Product products = 1;
+  int32 limit = 2;
+  int32 page = 3;
+  int32 max_pages = 4;
 }
 
 message GetFeaturedProductsRequest {
@@ -158,6 +189,7 @@ message GetFeaturedProductsResponse {
   repeated Product products = 1;
   int32 limit = 2;
   int32 page = 3;
+  int32 max_pages = 4;
 }
 
 message GetProductImagesRequest {
@@ -185,12 +217,21 @@ message Image {
   string image_type = 2;
 }
 
+message GetProductBySlugRequest {
+  string slug = 1;
+}
+
+message GetProductBySlugResponse {
+  Product product = 1;
+}
+
 // Category
 message Category {
   UUID id = 1;
   string name = 2;
   string description = 3;
   bool featured = 4;
+  string slug = 5;
 }
 
 message CategoryRequest {
@@ -205,6 +246,7 @@ message CreateCategoryRequest {
   string name = 1;
   string description = 2;
   bool featured = 3;
+  string slug = 4;
 }
 
 message CreateCategoryResponse {
@@ -216,6 +258,7 @@ message UpdateCategoryRequest {
   string name = 2;
   string description = 3;
   bool featured = 4;
+  string slug = 5;
 }
 
 message UpdateCategoryResponse {
@@ -256,18 +299,28 @@ message GetCategoriesResponse {
   repeated Category categories = 1;
 }
 
+message GetCategoryBySlugRequest {
+  string slug = 1;
+}
+
+message GetCategoryBySlugResponse {
+  Category category = 1;
+}
+
 // SubCategory
 message SubCategory {
   UUID id = 1;
   UUID category_id = 2;
   string name = 3;
   string description = 4;
+  string slug = 5;
 }
 
 message CreateSubCategoryRequest {
   UUID category_id = 1;
   string name = 2;
   string description = 3;
+  string slug = 4;
 }
 
 message CreateSubCategoryResponse {
@@ -279,6 +332,7 @@ message UpdateSubCategoryRequest {
   UUID category_id = 2;
   string name = 3;
   string description = 4;
+  string slug = 5;
 }
 
 message UpdateSubCategoryResponse {
@@ -316,6 +370,14 @@ message GetSubCategoryByIdRequest {
 }
 
 message GetSubCategoryByIdResponse {
+  SubCategory sub_category = 1;
+}
+
+message GetSubCategoryBySlugRequest {
+  string slug = 1;
+}
+
+message GetSubCategoryBySlugResponse {
   SubCategory sub_category = 1;
 }
 
