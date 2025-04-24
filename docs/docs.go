@@ -1386,16 +1386,17 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "integer",
-                        "description": "PaginationRequest Page",
+                        "description": "Page",
                         "name": "page",
                         "in": "query",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "PaginationRequest Limit",
+                        "description": "Limit",
                         "name": "limit",
-                        "in": "query"
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1788,7 +1789,8 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "ProductReq Limit",
                         "name": "limit",
-                        "in": "query"
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -1831,6 +1833,64 @@ const docTemplate = `{
                         "type": "string",
                         "description": "ProductReq Category",
                         "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ProductReq Page",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ProductReq Limit",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully updated user",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Product"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/by-category/{slug}": {
+            "get": {
+                "description": "Get products based on a given category slug, page, and limit",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Get products Based on a category slug",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ProductReq Category",
+                        "name": "slug",
                         "in": "path",
                         "required": true
                     },
@@ -2125,6 +2185,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/products/categories/slug/{slug}": {
+            "get": {
+                "description": "Get a category by slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Get A category by slug",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category Slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ProductCategory"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/products/categories/{id}": {
             "get": {
                 "description": "Get a category by id",
@@ -2267,6 +2371,57 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/routes.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/featured": {
+            "get": {
+                "description": "Get products based on page and limit",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Get Featured products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully updated user",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Product"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
                         }
                     }
                 }
@@ -2517,6 +2672,50 @@ const docTemplate = `{
                 }
             }
         },
+        "/products/slug/{slug}": {
+            "get": {
+                "description": "Get a product by product slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Get product by slug",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Product Slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Successfully updated user",
+                        "schema": {
+                            "$ref": "#/definitions/routes.Product"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.HTTPError"
+                        }
+                    }
+                }
+            }
+        },
         "/products/subcategories": {
             "post": {
                 "security": [
@@ -2610,6 +2809,50 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ErrResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/products/subcategories/slug/{slug}": {
+            "get": {
+                "description": "Get a subcategory by slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Get A subcategory by slug",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Subcategory Slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/routes.ProductSubCategory"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/routes.ErrResponse"
                         }
@@ -3240,6 +3483,9 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                },
+                "slug": {
+                    "type": "string"
                 }
             }
         },
@@ -3543,21 +3789,25 @@ const docTemplate = `{
                     "type": "number",
                     "example": 4.5
                 },
+                "brand": {
+                    "type": "string",
+                    "example": "J\u0026J"
+                },
                 "brand_id": {
                     "type": "string",
                     "example": "f183e73c-687d-44ad-83e6-636ecbb7a7d8"
                 },
-                "brand_name": {
+                "category": {
                     "type": "string",
-                    "example": "J\u0026J"
+                    "example": "Antibiotics"
                 },
                 "category_id": {
                     "type": "string",
                     "example": "f183e73c-687d-44ad-83e6-636ecbb7a7d8"
                 },
-                "category_name": {
+                "created_at": {
                     "type": "string",
-                    "example": "Antibiotics"
+                    "example": "2022-01-01T00:00:00Z"
                 },
                 "description": {
                     "type": "string",
@@ -3593,13 +3843,21 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 10
                 },
+                "slug": {
+                    "type": "string",
+                    "example": "antibiotics-mild-jj"
+                },
+                "sub_category": {
+                    "type": "string",
+                    "example": "Mild"
+                },
                 "sub_category_id": {
                     "type": "string",
                     "example": "f183e73c-687d-44ad-83e6-636ecbb7a7d8"
                 },
-                "sub_category_name": {
+                "updated_at": {
                     "type": "string",
-                    "example": "Mild"
+                    "example": "2022-01-01T00:00:00Z"
                 }
             }
         },
@@ -3608,7 +3866,8 @@ const docTemplate = `{
             "required": [
                 "description",
                 "featured",
-                "name"
+                "name",
+                "slug"
             ],
             "properties": {
                 "description": {
@@ -3626,6 +3885,10 @@ const docTemplate = `{
                 "name": {
                     "type": "string",
                     "example": "Amoxilin"
+                },
+                "slug": {
+                    "type": "string",
+                    "example": "amoxilin"
                 }
             }
         },
@@ -3634,7 +3897,8 @@ const docTemplate = `{
             "required": [
                 "category_id",
                 "description",
-                "name"
+                "name",
+                "slug"
             ],
             "properties": {
                 "category_id": {
@@ -3650,6 +3914,10 @@ const docTemplate = `{
                     "example": "f183e73c-687d-44ad-83e6-636ecbb7a7d8"
                 },
                 "name": {
+                    "type": "string",
+                    "example": "anticonvulsants"
+                },
+                "slug": {
                     "type": "string",
                     "example": "anticonvulsants"
                 }

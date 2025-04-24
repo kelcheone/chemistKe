@@ -40,6 +40,8 @@ definitions:
         type: string
       name:
         type: string
+      slug:
+        type: string
     type: object
   product_proto.GetCategoriesResponse:
     properties:
@@ -250,17 +252,20 @@ definitions:
       average_rating:
         example: 4.5
         type: number
+      brand:
+        example: J&J
+        type: string
       brand_id:
         example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
         type: string
-      brand_name:
-        example: J&J
+      category:
+        example: Antibiotics
         type: string
       category_id:
         example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
         type: string
-      category_name:
-        example: Antibiotics
+      created_at:
+        example: "2022-01-01T00:00:00Z"
         type: string
       description:
         example: product description
@@ -287,11 +292,17 @@ definitions:
       review_count:
         example: 10
         type: integer
+      slug:
+        example: antibiotics-mild-jj
+        type: string
+      sub_category:
+        example: Mild
+        type: string
       sub_category_id:
         example: f183e73c-687d-44ad-83e6-636ecbb7a7d8
         type: string
-      sub_category_name:
-        example: Mild
+      updated_at:
+        example: "2022-01-01T00:00:00Z"
         type: string
     required:
     - brand_id
@@ -316,10 +327,14 @@ definitions:
       name:
         example: Amoxilin
         type: string
+      slug:
+        example: amoxilin
+        type: string
     required:
     - description
     - featured
     - name
+    - slug
     type: object
   routes.ProductSubCategory:
     properties:
@@ -335,10 +350,14 @@ definitions:
       name:
         example: anticonvulsants
         type: string
+      slug:
+        example: anticonvulsants
+        type: string
     required:
     - category_id
     - description
     - name
+    - slug
     type: object
   routes.Review:
     properties:
@@ -1343,14 +1362,15 @@ paths:
       - application/json
       description: Get products based on page and limit
       parameters:
-      - description: PaginationRequest Page
+      - description: Page
         in: query
         name: page
         required: true
         type: integer
-      - description: PaginationRequest Limit
+      - description: Limit
         in: query
         name: limit
+        required: true
         type: integer
       produces:
       - application/json
@@ -1692,6 +1712,7 @@ paths:
       - description: ProductReq Limit
         in: query
         name: limit
+        required: true
         type: integer
       produces:
       - application/json
@@ -1748,6 +1769,45 @@ paths:
           schema:
             $ref: '#/definitions/routes.HTTPError'
       summary: Get products Based on a category
+      tags:
+      - Products
+  /products/by-category/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Get products based on a given category slug, page, and limit
+      parameters:
+      - description: ProductReq Category
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: ProductReq Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: ProductReq Limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Get products Based on a category slug
       tags:
       - Products
   /products/by-subcategory/{id}:
@@ -2011,6 +2071,69 @@ paths:
       summary: Gets featured product categories.
       tags:
       - Products
+  /products/categories/slug/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Get a category by slug
+      parameters:
+      - description: Category Slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.ProductCategory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Get A category by slug
+      tags:
+      - Products
+  /products/featured:
+    get:
+      consumes:
+      - application/json
+      description: Get products based on page and limit
+      parameters:
+      - description: Page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Get Featured products
+      tags:
+      - Products
   /products/images/{id}:
     get:
       consumes:
@@ -2170,6 +2293,35 @@ paths:
       summary: Create a new review for a product
       tags:
       - Products
+  /products/slug/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Get a product by product slug
+      parameters:
+      - description: Product Slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successfully updated user
+          schema:
+            $ref: '#/definitions/routes.Product'
+        "400":
+          description: Invalid input data
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/routes.HTTPError'
+      summary: Get product by slug
+      tags:
+      - Products
   /products/subcategories:
     patch:
       consumes:
@@ -2299,6 +2451,35 @@ paths:
           schema:
             $ref: '#/definitions/routes.ErrResponse'
       summary: Retrieves a subcategory by its ID
+      tags:
+      - Products
+  /products/subcategories/slug/{slug}:
+    get:
+      consumes:
+      - application/json
+      description: Get a subcategory by slug
+      parameters:
+      - description: Subcategory Slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/routes.ProductSubCategory'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/routes.ErrResponse'
+      summary: Get A subcategory by slug
       tags:
       - Products
   /users:
