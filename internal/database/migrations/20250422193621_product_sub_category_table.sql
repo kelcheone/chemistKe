@@ -9,6 +9,7 @@ CREATE TABLE product_sub_category (
     name VARCHAR(255) NOT NULL,
     category_id UUID NOT NULL,
     description TEXT,
+    slug VARCHAR(255) NOT NULL,
     FOREIGN KEY (category_id) REFERENCES product_category (id)
 );
 

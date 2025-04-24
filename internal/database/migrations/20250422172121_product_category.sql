@@ -9,7 +9,8 @@ CREATE TABLE product_category (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     featured BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP
+    created_at TIMESTAMP,
+    slug VARCHAR(255) NOT NULL,
     WITH
         TIME ZONE NOT NULL DEFAULT NOW (),
         updated_at TIMESTAMP
