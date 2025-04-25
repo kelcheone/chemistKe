@@ -474,7 +474,12 @@ func (s *ProductService) GetProducts(
 	req *pb.GetProductsRequest,
 ) (*pb.GetProductsResponse, error) {
 	stmt := BuildProductQuery("", "ORDER BY created_at DESC")
-	rows, err := s.db.Query(stmt, req.Limit, req.Page)
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	offset := (req.Page - 1) * req.Limit
+
+	rows, err := s.db.Query(stmt, req.Limit, offset)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -508,8 +513,12 @@ func (s *ProductService) GetProductsByCategory(
 	req *pb.GetProductsByCategoryRequest,
 ) (*pb.GetProductsByCategoryResponse, error) {
 	stmt := BuildProductQuery("category_id=$3", "ORDER BY created_at DESC")
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	offset := (req.Page - 1) * req.Limit
 
-	rows, err := s.db.Query(stmt, req.Limit, req.Page, req.CategoryId.Value)
+	rows, err := s.db.Query(stmt, req.Limit, offset, req.CategoryId.Value)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -543,8 +552,12 @@ func (s *ProductService) GetProductsBySubCategory(
 	req *pb.GetProductsBySubCategoryRequest,
 ) (*pb.GetProductsBySubCategoryResponse, error) {
 	stmt := BuildProductQuery("sub_category_id=$3", "ORDER BY created_at DESC")
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	offset := (req.Page - 1) * req.Limit
 
-	rows, err := s.db.Query(stmt, req.Limit, req.Page, req.SubCategoryId.Value)
+	rows, err := s.db.Query(stmt, req.Limit, offset, req.SubCategoryId.Value)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -578,7 +591,12 @@ func (s *ProductService) GetProductsByBrand(
 	req *pb.GetProductsByBrandRequest,
 ) (*pb.GetProductsByBrandResponse, error) {
 	stmt := BuildProductQuery("brand_id=$3", "ORDER BY created_at DESC")
-	rows, err := s.db.Query(stmt, req.Limit, req.Page, req.BrandId.Value)
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	offset := (req.Page - 1) * req.Limit
+
+	rows, err := s.db.Query(stmt, req.Limit, offset, req.BrandId.Value)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -609,8 +627,12 @@ func (s *ProductService) GetProductsByBrand(
 
 func (s *ProductService) GetFeaturedProducts(ctx context.Context, req *pb.GetFeaturedProductsRequest) (*pb.GetFeaturedProductsResponse, error) {
 	stmt := BuildProductQuery("featured=true", "ORDER BY created_at DESC")
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	offset := (req.Page - 1) * req.Limit
 
-	rows, err := s.db.Query(stmt, req.Limit, req.Page)
+	rows, err := s.db.Query(stmt, req.Limit, offset)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -1071,7 +1093,12 @@ func (s *ProductService) CreateCategory(ctx context.Context, req *pb.CreateCateg
 
 func (s *ProductService) GetCategories(ctx context.Context, req *pb.GetCategoriesRequest) (*pb.GetCategoriesResponse, error) {
 	stmt := `SELECT id, name, description, featured, slug FROM product_category LIMIT $1 OFFSET $2`
-	rows, err := s.db.Query(stmt, req.Limit, req.Offset)
+	// make sure req.offset is not negative or zero make it 1
+	if req.Offset <= 0 {
+		req.Offset = 1
+	}
+	offset := (req.Offset - 1) * req.Limit
+	rows, err := s.db.Query(stmt, req.Limit, offset)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -1233,7 +1260,12 @@ func (s *ProductService) CreateSubCategory(ctx context.Context, req *pb.CreateSu
 
 func (s *ProductService) GetSubCategories(ctx context.Context, req *pb.GetSubCategoriesRequest) (*pb.GetSubCategoriesResponse, error) {
 	stmt := `SELECT id, name, description, category_id, slug FROM product_sub_category WHERE category_id = $1 LIMIT $2 OFFSET $3`
-	rows, err := s.db.Query(stmt, req.CategoryId.Value, req.Limit, req.Offset)
+	if req.Offset <= 0 {
+		req.Offset = 1
+	}
+	offset := (req.Offset - 1) * req.Limit
+
+	rows, err := s.db.Query(stmt, req.CategoryId.Value, req.Limit, offset)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
@@ -1374,8 +1406,13 @@ func (s *ProductService) CreateBrand(ctx context.Context, req *pb.CreateBrandReq
 }
 
 func (s *ProductService) GetBrands(ctx context.Context, req *pb.GetBrandsRequest) (*pb.GetBrandsResponse, error) {
-	stmt := `SELECT id, name, description FROM product_brand`
-	rows, err := s.db.Query(stmt)
+	stmt := `SELECT id, name, description FROM product_brand LIMIT $1 OFFSET $2`
+	if req.Offset <= 0 {
+		req.Offset = 1
+	}
+	offset := (req.Offset - 1) * req.Limit
+
+	rows, err := s.db.Query(stmt, req.Limit, offset)
 	if err != nil {
 		return nil, status.Errorf(
 			codes.Internal,
