@@ -93,7 +93,7 @@ func (s *UserService) GetUserByEmail(
 	ctx context.Context,
 	req *pb.GetUserByEmailRequest,
 ) (*pb.GetUserByEmailResponse, error) {
-	stmt := `SELECT id, name, email, phone, password, role FROM users WHERE email=$1`
+	stmt := `SELECT id, name, email, phone, password, role FROM users WHERE LOWER(email)= LOWER($1)`
 	row := s.db.QueryRow(stmt, req.Email)
 
 	var gUser pb.User

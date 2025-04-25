@@ -3,6 +3,7 @@ package authservice
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -12,12 +13,12 @@ import (
 )
 
 type User struct {
-	Id       string `json:"id"`       // User unique identifier
-	Name     string `json:"name"`     // User full name
-	Email    string `json:"email"`    // User email address
-	Phone    string `json:"phone"`    // User phone number
-	Password string `json:"password"` // User password (will be compared with stored hash)
-	Role     string `json:"role"`     // User role (admin, customer, etc.)
+	Id       string `json:"id"`                              // User unique identifier
+	Name     string `json:"name"`                            // User full name
+	Email    string `json:"email" validate:"email,required"` // User email address
+	Phone    string `json:"phone"`                           // User phone number
+	Password string `json:"password" validate:"required"`    // User password (will be compared with stored hash)
+	Role     string `json:"role"`                            // User role (admin, customer, etc.)
 	Client   user_proto.UserServiceClient
 }
 
@@ -70,8 +71,16 @@ func (u *User) Login(c echo.Context) error {
 		)
 	}
 
+	if err := c.Validate(user); err != nil {
+		return c.JSON(http.StatusBadRequest, ErrResponse{
+			Message: fmt.Sprintf("could not validate request: %+v", err.Error()),
+		})
+	}
+	log.Printf("got use details: %+v", user)
+
 	getUserResp, err := u.Client.GetUserByEmail(ctx, &user_proto.GetUserByEmailRequest{Email: user.Email})
 	if err != nil {
+		log.Println("error getting user by email: ", err.Error())
 		return c.JSON(
 			http.StatusInternalServerError,
 			ErrResponse{Message: fmt.Sprintf("%v", err.Error())},
@@ -82,6 +91,7 @@ func (u *User) Login(c echo.Context) error {
 
 	err = utils.ComparePassword(user.Password, hashedPassword)
 	if err != nil {
+		log.Println("error comparing passwords: ", err.Error())
 		return c.JSON(
 			http.StatusInternalServerError,
 			ErrResponse{Message: fmt.Sprintf("%v", err.Error())},
