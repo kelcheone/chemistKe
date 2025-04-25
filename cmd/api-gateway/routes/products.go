@@ -1753,5 +1753,15 @@ func (p *ProductServer) GetBrands(c echo.Context) error {
 		})
 	}
 
-	return c.JSON(http.StatusOK, resp)
+	var brands []Brand
+	for _, brand := range resp.Brands {
+		brands = append(brands, Brand{
+			Id:          brand.Id.Value,
+			Name:        brand.Name,
+			Description: brand.Description,
+		})
+	}
+	return c.JSON(http.StatusOK, map[string]any{
+		"brands": brands,
+	})
 }
