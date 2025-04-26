@@ -11,7 +11,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pg} -d ${DB_NAME:-chemist_ke}"]
+      test:
+        ["CMD-SHELL", "pg_isready -U ${DB_USER:-pg} -d ${DB_NAME:-chemist_ke}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -19,7 +20,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1"
           memory: 1G
   migrations:
     build:
@@ -34,7 +35,7 @@ services:
       database:
         condition: service_healthy
     env_file:
-      - .env
+      - path: .env.monolith
     restart: on-failure
   chemistke:
     container_name: chemistke
@@ -42,7 +43,7 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env
+      - path: .env.monolith
     restart: always
     ports:
       - "9090:9090"
@@ -60,7 +61,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
+          cpus: "2"
           memory: 2G
     logging:
       driver: "json-file"
