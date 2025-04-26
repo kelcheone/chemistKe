@@ -1,0 +1,185 @@
+services:
+  product-service:
+    container_name: product-service
+    build:
+      context: .
+      dockerfile: deployments/docker/product.Dockerfile
+    env_file:
+      - path: .env.docker
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    command: ["/product-service"]
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: "2G"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  order-service:
+    container_name: order-service
+    build:
+      context: .
+      dockerfile: deployments/docker/order.Dockerfile
+    env_file:
+      - path: .env.docker
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    command: ["/order-service"]
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: "2G"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  cms-service:
+    container_name: cms-service
+    build:
+      context: .
+      dockerfile: deployments/docker/cms.Dockerfile
+    env_file:
+      - path: .env.docker
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    command: ["/cms-service"]
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: "2G"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  user-service:
+    container_name: user-service
+    build:
+      context: .
+      dockerfile: deployments/docker/user.Dockerfile
+    env_file:
+      - path: .env.docker
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+
+    command: ["/user-service"]
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: "2G"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  gateway:
+    container_name: gateway
+    build:
+      context: .
+      dockerfile: deployments/docker/gateway.Dockerfile
+    ports:
+      - "9090:9090"
+    env_file:
+      - path: .env.docker
+    restart: always
+    depends_on:
+      database:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+      user-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      cms-service:
+        condition: service_started
+
+    command: ["/gateway"]
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: "2G"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  database:
+    container_name: chemistke_db
+    image: postgres:17
+    environment:
+      - POSTGRES_USER=${DB_USER:-pg}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-chemistke}
+      - POSTGRES_DB=${DB_NAME:-chemist_ke}
+    ports:
+      - "127.0.0.1:9999:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${DB_USER:-pg} -d ${DB_NAME:-chemist_ke}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: "2G"
+
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+      args:
+        GOOSE_DBSTRING: ${GOOSE_DBSTRING}
+    command: make db-up
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file:
+      - path: .env.docker
+    restart: "no"
+
+networks:
+  default:
+    driver: bridge
+    name: chemistke_network
+
+volumes:
+  postgres_data:
+    driver: local
