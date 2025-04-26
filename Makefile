@@ -26,23 +26,36 @@ generate: $(SERVICES)
 # Rule to generate Go code for each service
 $(SERVICES):
 	@if [ -d $(PROTO_DIR)/$@ ]; then \
-		echo "Generating Go code for $@ service..."; \
+		echo "Checking $@ service..."; \
 		OUT_DIR=$(GO_OUT_DIR)/$@; \
 		mkdir -p $$OUT_DIR; \
 		PROTO_FILES=$$(find $(PROTO_DIR)/$@ -name '*.proto'); \
 		if [ -n "$$PROTO_FILES" ]; then \
-			$(PROTOC) --proto_path=$(PROTO_DIR)/$@ \
-				--go_out=$$OUT_DIR --go_opt=paths=source_relative \
-				--go-grpc_out=$$OUT_DIR --go-grpc_opt=paths=source_relative \
-				$$PROTO_FILES; \
+			REGENERATE=0; \
+			for proto_file in $$PROTO_FILES; do \
+				base_name=$$(basename $$proto_file .proto); \
+				pb_file=$$OUT_DIR/$$base_name.pb.go; \
+				grpc_file=$$OUT_DIR/$$base_name\_grpc.pb.go; \
+				if [ ! -f $$pb_file ] || [ ! -f $$grpc_file ] || [ $$proto_file -nt $$pb_file ] || [ $$proto_file -nt $$grpc_file ]; then \
+					REGENERATE=1; \
+				fi; \
+			done; \
+			if [ "$$REGENERATE" -eq 1 ]; then \
+				echo "Generating Go code for $@ service..."; \
+				$(PROTOC) --proto_path=$(PROTO_DIR)/$@ \
+					--go_out=$$OUT_DIR --go_opt=paths=source_relative \
+					--go-grpc_out=$$OUT_DIR --go-grpc_opt=paths=source_relative \
+					$$PROTO_FILES; \
+			else \
+				echo "No changes detected for $@ service. Skipping regeneration."; \
+			fi \
 		else \
-			echo "Skipping $@ service: No .proto files found in $(PROTO_DIR)/$@."; \
+			echo "Skipping $@ service: No .proto files found."; \
 		fi \
 	else \
 		echo "Skipping $@ service: $(PROTO_DIR)/$@ directory does not exist."; \
 	fi
 
-# Clean generated files
 clean:
 	@echo "Cleaning generated files..."
 	rm -rf $(GO_OUT_DIR)/*
@@ -130,7 +143,17 @@ db-status:
 pfmt:
 	buf format  $(PROTO_DIR)  -w
 
+# install swagger
+install-swagger:
+	go install github.com/swaggo/swag/cmd/swag@latest
 
-run-client:
-	swag init -g cmd/api-gateway/gateway.go --parseDependency --output ./docs 
+# run swagger generate
+swagger:
+	swag init -g cmd/api-gateway/gateway.go --parseDependency --output ./docs
+
+replace-host:
+	sed -i "s|// @host .*|// @host $(NEW_HOST)|" cmd/api-gateway/gateway.go
+	echo "Updated Go file: cmd/api-gateway/gateway.go"
+
+run-client: swagger
 	go run cmd/api-gateway/gateway.go

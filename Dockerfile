@@ -6,6 +6,9 @@ ENV GOOSE_DBSTRING=$GOOSE_DBSTRING
 ARG DB_URL
 ENV DB_URL=$DB_URL
 
+ARG SERVER_HOST
+ENV SERVER_HOST=$SERVER_HOST
+
 RUN apk add --no-cache  \
     git\
     make\
@@ -27,7 +30,7 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY .env* ./
+COPY .env.docker ./.env
 
 COPY . .
 
@@ -36,6 +39,9 @@ RUN make install-plugins
 
 RUN make prepare
 
+RUN make install-swagger
+RUN make replace-host  NEW_HOST=$SERVER_HOST
+RUN make swagger
 
 #build both binaries
 RUN go build -o services  ./main.go
