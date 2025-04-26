@@ -108,7 +108,6 @@ func (s *UserServer) CreateUser(c echo.Context) error {
 		pbUSer.Role = user_proto.UserRoles_USER
 	}
 
-	fmt.Printf("%+v\n", pbUSer)
 	res, err := s.UserClient.AddUser(
 		ctx,
 		&user_proto.AddUserRequest{User: pbUSer},
