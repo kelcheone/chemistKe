@@ -5,14 +5,16 @@ meta {
 }
 
 get {
-  url: http://localhost:9090/api/v1/products
+  url: http://localhost:9090/api/v1/products?page=1&limit=10
   body: json
-  auth: none
+  auth: bearer
 }
 
-body:json {
-  {
-    "page":1,
-    "limit": 10
-  }
+params:query {
+  page: 1
+  limit: 10
+}
+
+auth:bearer {
+  token: {{token}}
 }
