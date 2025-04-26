@@ -30,7 +30,11 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
-COPY .env.docker ./.env
+RUN if [ -f .env.docker ]; then \
+    cp .env.docker .env; \
+    else \
+    echo "# Default environment settings" > .env; \
+    fi
 
 COPY . .
 
