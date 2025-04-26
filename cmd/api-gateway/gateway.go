@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/go-playground/validator"
+	"github.com/joho/godotenv"
 	authservice "github.com/kelcheone/chemistke/cmd/api-gateway/auth"
 	routes "github.com/kelcheone/chemistke/cmd/api-gateway/routes"
 	"github.com/kelcheone/chemistke/cmd/utils"
@@ -58,7 +60,8 @@ func (cv *CustomValidator) Validate(i interface{}) error {
 // @description JWT Authorization header using the Bearer scheme. Example: "Authorization: Bearer {token}"
 
 func main() {
-	userServer, CloseUserConn, err := routes.ConnectUserServer("localhost:8090")
+	_ = godotenv.Load()
+	userServer, CloseUserConn, err := routes.ConnectUserServer(os.Getenv("USER_SERVICE_HOST"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,7 +69,7 @@ func main() {
 	defer CloseUserConn()
 
 	productsServer, CloseProductConn, err := routes.ConnectProductServer(
-		"localhost:8090",
+		os.Getenv("PRODUCT_SERVICE_HOST"),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -75,7 +78,7 @@ func main() {
 	defer CloseProductConn()
 
 	ordersServer, CloseOrderConn, err := routes.ConnectOrdersServer(
-		"localhost:8090",
+		os.Getenv("ORDERS_SERVICE_HOST"),
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -83,7 +86,7 @@ func main() {
 
 	defer CloseOrderConn()
 
-	cmsServer, CloseCmsConn, err := routes.ConnectCmsServer("localhost:8090")
+	cmsServer, CloseCmsConn, err := routes.ConnectCmsServer(os.Getenv("CMS_SERVICE_HOST"))
 	if err != nil {
 		log.Fatal(err)
 	}
