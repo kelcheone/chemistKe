@@ -3,3 +3,7 @@ tmp
 pkg/grpc
 public
 *.session
+spec.md
+folder-structure.md
+setup.sh
+products.json
